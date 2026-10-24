@@ -5,6 +5,8 @@ import { A_CHECKPOINT, CHECKPOINTS, Motor, type V3 } from './physics';
 import { GameInput } from './input';
 import { CityAudio } from './audio';
 import { MIRA_POS, NODE_POS, REORDER_POS, STATION_POS } from './world';
+import { ForgeChapter } from './forge-chapter';
+import type { Weather } from './forge-domain';
 
 const $ = <T extends HTMLElement = HTMLElement>(id:string):T => document.getElementById(id) as T;
 const show = (id:string,visible:boolean):void=>{$(id).hidden=!visible;};
@@ -48,6 +50,8 @@ let proof:RunResult|null=null;
 let sourceDrag:{node:Exclude<Station,'END'>;x:number;y:number;moved:boolean}|null=null;
 let eventDrag:{action:EventAction;startY:number;centers:number[];element:HTMLElement}|null=null;
 let lastStep=0;
+const forge=new ForgeChapter({campaign:()=>campaign,view,motor,audio,
+  block:on=>{setMode(on?'patch':'play');},persist,toast,clearInput:()=>input.clear(),weather:changeWeather,returnDock});
 show('btn-continue',saved!==null);
 const dialogue=[
   '我女儿在 B 站。列车每天经过那里，却再也没有停下来。系统说，那座车站不存在。',
@@ -56,13 +60,18 @@ const dialogue=[
 ];
 
 function setMode(next:typeof mode):void {
-  mode=next;$('app').dataset.mode=next;
+  mode=next;$('app').dataset.mode=next;$('app').dataset.city=view.city;
+  $('btn-map').setAttribute('aria-label',view.city==='forge'?'打开脉冲炉地图':'打开指针港地图');
+  const miniCaption=$('btn-map').querySelector('span')!;miniCaption.textContent=view.city==='forge'?'PULSE FORGE ↗':'POINTER DOCK ↗';
+  const sector=$('hud').querySelector('.sector-label')!;
+  sector.replaceChildren(document.createTextNode(view.city==='forge'?'脉冲炉 ':'指针港 '),Object.assign(document.createElement('span'),{textContent:view.city==='forge'?'SECTOR 02':'SECTOR 01'}),document.createElement('i'),$('world-state'));
   eventDrag=null;sourceDrag=null;
   if(next!=='play')$('world-markers').replaceChildren();
   show('menu',next==='menu');show('hud',next==='play'||next==='patch');
-  show('patch-panel',next==='patch');show('patch-nodes',next==='patch'&&patchCase==='DS-01');
+  show('patch-panel',next==='patch'&&view.city==='dock');show('patch-nodes',next==='patch'&&patchCase==='DS-01'&&view.city==='dock');
   show('cinema',next==='cinema');show('result',next==='result');
   if(next!=='patch')show('proof-panel',false);
+  show('btn-forge-travel',view.city==='dock'&&campaign.data.chapter==='complete'&&next==='play');
   input.clear();
 }
 function persist():void {saveProgress(campaign.data);saved=structuredClone(campaign.data);show('btn-continue',true);}
@@ -76,12 +85,32 @@ function syncWorld():void {
   $('mini-route').style.stroke=chapter>=3?'#8ef7c7':'#e28a7e';
 }
 function start(resume=false):void {
-  closeModal();campaign=new Campaign(resume&&saved?saved:freshProgress());
+  closeModal();forge.hide();view.switchCity('dock');campaign=new Campaign(resume&&saved?saved:freshProgress());
+  motor.obstacles=world.obstacles;
   motor.reset();motor.warp(CHECKPOINTS[campaign.data.chapter]);view.yaw=0;view.pitch=.34;
   world.showDraft(null);syncWorld();setMode('play');view.mode='follow';
   dialogueIndex=-1;show('subtitle',false);show('scan-banner',false);scanUntil=0;hintCount=0;
   audio.unlock();audio.setEnabled(settings.sound);audio.setPaused(false);persist();updateHud();
+  audio.city='dock';changeWeather(campaign.data.weather,false);
+  if(campaign.data.city==='forge'){forge.enter();return;}
   toast(resume?'旅程已恢复。检查点就在脚下。':'WASD 移动 · 右键拖动看四周 · 前往站长 MIRA',5);
+}
+function changeWeather(weather:Weather,announce=true):void {
+  campaign.data.weather=weather;view.weather=weather;
+  $('weather-clear').setAttribute('aria-pressed',String(weather==='clear'));
+  $('weather-rain').setAttribute('aria-pressed',String(weather==='rain'));
+  if(mode!=='menu')persist();
+  if(announce){audio.cue('select');toast(forge.active?(weather==='clear'?'天气转晴 · 集电板开始接收阳光。':'雨线已抵达 · 开放的集电板会降温，也会漏电。'):(weather==='clear'?'云层散开，天光照进了指针港。':'雨线重返港湾。路面与水面映出灯光。'),4);}
+}
+function enterForge():void {
+  if(campaign.data.chapter!=='complete'){toast('先完成指针港的返航，城际列车就会开放。');return;}
+  closeModal();dialogueIndex=-1;show('subtitle',false);show('scan-banner',false);world.showDraft(null);
+  forge.enter();changeWeather(campaign.data.weather,false);
+}
+function returnDock():void {
+  closeModal();forge.hide();view.switchCity('dock');campaign.data.city='dock';audio.city='dock';
+  motor.obstacles=world.obstacles;syncWorld();motor.warp(CHECKPOINTS.complete);setMode('play');view.mode='follow';
+  changeWeather(campaign.data.weather,false);persist();updateHud();toast('城际列车已抵达指针港。两城的修复记录都已保留。',5);
 }
 function toast(message:string,duration=3.6):void{setText('toast',message);show('toast',true);toastUntil=now+duration;}
 function goal():{pos:V3;label:string;code:string;title:string;description:string} {
@@ -90,9 +119,10 @@ function goal():{pos:V3;label:string;code:string;title:string;description:string
   if(c==='reorder')return {pos:REORDER_POS,label:'Q-01 / 事件失序',code:'Q-01 / CAUSAL ORDER',title:'先离开，再消失',description:'前方站台在旅客离开前消失。靠近后按 Q 扫描。'};
   if(c==='rail')return {pos:STATION_POS.A,label:'DS-01 / 失联线路',code:'DS-01 / BROKEN LINK',title:'一座被跳过的车站',description:'跨过修好的通道，沿坡道前往 A 站，扫描列车运行轨迹。'};
   if(c==='board')return {pos:STATION_POS.A,label:'A / 返航列车',code:'FINAL / HOMEBOUND',title:'带她回家',description:'回到 A 站，登上恢复运行的列车。沿途看看你改变的城市。'};
-  return {pos:STATION_POS.END,label:'END / 已恢复',code:'CHAPTER 01 / RESTORED',title:'世界还在运行',description:'指针港已经恢复。自由探索三层步道，或从菜单重新修复。'};
+  return {pos:STATION_POS.END,label:'END / 城际列车',code:'CHAPTER 01 / RESTORED',title:'下一站，脉冲炉',description:'指针港已经恢复。前往 END 站按 E，或点击下方按钮乘城际列车。'};
 }
 function updateHud():void {
+  if(forge.active){forge.updateHud();return;}
   const g=goal();setText('quest-code',g.code);setText('quest-title',g.title);setText('quest-description',g.description);
   const d=distance(motor.position,g.pos);setText('quest-distance',`${d<6?'◇ 已抵达':'↗ '+Math.round(d)+' m'}  /  ${g.label}`);
   setText('identity-status',campaign.data.chapter==='meet'?'身份未知 / UNKNOWN':'因果织针 / 已连接');
@@ -115,11 +145,13 @@ function nearInteraction():{kind:string;label:string}|null {
   if(c==='reorder'&&distance(p,REORDER_POS)<9&&Math.abs(p.y-3)<4)return {kind:'order',label:campaign.data.evidence.includes('Q-01')?'打断点 · 改写事件顺序':'按 Q 扫描异常站台'};
   if(c==='rail'&&distance(p,STATION_POS.A)<13&&p.y>10)return {kind:'rail',label:campaign.data.evidence.includes('DS-01')?'打断点 · 检查列车指针':'按 Q 扫描列车线路'};
   if(c==='board'&&distance(p,STATION_POS.A)<13&&p.y>10)return {kind:'board',label:'登上返航列车'};
+  if(c==='complete'&&distance(p,STATION_POS.END)<13&&p.y>10)return {kind:'forge',label:'乘城际列车 · 前往脉冲炉'};
   if(c!=='meet'&&distance(p,MIRA_POS)<5&&Math.abs(p.y-3)<3)return {kind:'mira-after',label:'听听 MIRA 怎么说'};
   if(distance(p,STATION_POS.B)<7&&p.y>10)return {kind:'daughter',label:'检查 B 站的等待记录'};
   return null;
 }
 function interact():void {
+  if(forge.active){if(!modalType)forge.interact();return;}
   if(modalType||mode==='menu'||mode==='result'||mode==='cinema')return;
   if(mode==='patch')return;
   if(dialogueIndex>=0){advanceDialogue();return;}
@@ -132,6 +164,7 @@ function interact():void {
     openPatch(id);
   }
   if(item.kind==='board')board();
+  if(item.kind==='forge')enterForge();
   if(item.kind==='mira-after')toast(campaign.data.chapter==='board'||campaign.data.chapter==='complete'?'MIRA：她的名字又出现在站牌上了。谢谢你，零号。':'MIRA：听见了吗？每一个错误里，都还有人在等。',5);
   if(item.kind==='daughter')toast(campaign.data.chapter==='rail'?'等待记录：旅客仍在 B 站。列车从 A 直接开往 C，已错过 404 次。':'旅客记录：已登车。目的地：家。',5);
 }
@@ -141,6 +174,7 @@ function advanceDialogue(increment=true):void {
   input.clear();show('subtitle',true);setText('speaker','MIRA / 指针港站长');setText('subtitle-text',dialogue[dialogueIndex]);
 }
 function scan():void {
+  if(forge.active){if(!modalType)forge.scan();return;}
   if(mode!=='play'||modalType||dialogueIndex>=0)return;
   if(campaign.data.chapter==='meet'){toast('先找到 MIRA，获取因果织针。');return;}
   world.scan(motor.position);audio.cue('scan');scanUntil=now+6;
@@ -255,19 +289,20 @@ function board():void {
   setText('cinema-detail',`${result.route.join(' → ')}。每个名字，都值得被世界找到。`);audio.cue('success');
 }
 function showResult():void {
-  if(!campaign.finish())return;
+  if(campaign.data.chapter!=='complete'&&!campaign.finish())return;
   persist();settings.best=settings.best===null?campaign.data.elapsed:Math.min(settings.best,campaign.data.elapsed);saveSettings(settings);
   motor.warp(CHECKPOINTS.complete);motor.setCheckpoint(CHECKPOINTS.complete);setMode('result');view.mode='result';audio.cue('success');
   $('result-stats').innerHTML=`<div class="result-stat"><b>${clock(campaign.data.elapsed)}</b><small>修复用时</small></div><div class="result-stat"><b>${campaign.data.attempts.toString().padStart(2,'0')}</b><small>补丁实验</small></div><div class="result-stat"><b>04 / 04</b><small>恢复可达的车站</small></div>`;
 }
 function hint():void {
+  if(forge.active){forge.hint();return;}
   const c=campaign.data.chapter;hintCount++;
   const hints:Record<Chapter,string[]>={
     meet:['向前走，左侧雨棚下的断环角色就是 MIRA。靠近后按 E。'],
     reorder:['先观察：平台删除时，旅客还站在上面。按 Q 捕获轨迹，再按 E 进入编辑。','想一想：生还记录只能在旅客离开后保存；删除站台也要等旅客离开。','将「让旅客离开」移到第一位，另外两个事件放在后面。按 R 验证两个速度的旅客。'],
     rail:['沿刚修好的桥向前，再爬上长坡道。到 A 站后按 Q 扫描。','列车的访问记录里少了 B。检查 A 的下一站，以及 B 自己的下一站。','把 A.next 指向 B。B 已经连到 C；C 会继续去 END。再重放验证有没有循环。'],
     board:['到 A 站的列车旁按 E。列车会沿刚刚证明的线路返航。'],
-    complete:['左侧还有通往核心观景台的两段坡道。你也可以从菜单重新开始。'],
+    complete:['到 END 站按 E，或点击任务下方「前往脉冲炉」。天气按钮能切换晴雨。'],
   };
   const list=hints[c];toast(list[Math.min(hintCount-1,list.length-1)],7);
 }
@@ -277,15 +312,18 @@ function openModal(type:string):void {
   modalType=type;input.clear();audio.setPaused(true);show('modal-layer',true);
   const content=$('modal-content');
   if(type==='pause')content.innerHTML='<div class="eyebrow">LOCAL TIME / FROZEN</div><h2 id="modal-title">城市会等你。</h2><p>时间、列车和因果事件均已暂停。<br>你的进度已保存在最近的检查点。</p><div class="modal-actions"><button class="primary" id="modal-resume">继续旅程 <span>→</span></button><button class="text-button" id="modal-checkpoint">回到检查点 ↶</button><button class="text-button" id="modal-menu">返回主菜单 ↗</button></div>';
-  else if(type==='help')content.innerHTML='<div class="eyebrow">THE CAUSAL NEEDLE / 操作手册</div><h2 id="modal-title">看见错误，再改写因果。</h2><p>你是零号，一个没有身份记录的存在。港城里有人正在被系统遗忘。<br><b>靠近异常 → 扫描证据 → 打断点 → 改写 → 重放验证。</b></p><div class="modal-controls"><div><kbd>WASD</kbd>移动 / 方向键也可</div><div><kbd>Shift</kbd>冲刺</div><div><kbd>Space</kbd>跳跃</div><div><kbd>右键拖动</kbd>转动视角</div><div><kbd>Q</kbd>扫描因果</div><div><kbd>E</kbd>对话 / 打断点 / 登车</div><div><kbd>R</kbd>验证当前补丁</div><div><kbd>M / Tab</kbd>城市地图</div><div><kbd>Esc</kbd>退出编辑 / 暂停</div></div><p class="modal-rule">手机：左侧摇杆移动，右侧空白处拖动视角。「溯源」扫描，向上按钮跳跃，屏幕中间的交互提示可直接点按。<br>进入断点后局部时间冻结，随时可以撤销草案。失败不会丢掉已收集的证据。</p>';
+  else if(type==='help')content.innerHTML='<div class="eyebrow">THE CAUSAL NEEDLE / 操作手册</div><h2 id="modal-title">看见错误，再改写因果。</h2><p>你是零号，一个没有身份记录的存在。港城里有人正在被系统遗忘。<br><b>靠近异常 → 扫描证据 → 打断点 → 改写 → 重放验证。</b></p><div class="modal-controls"><div><kbd>WASD</kbd>移动 / 方向键也可</div><div><kbd>Shift</kbd>冲刺</div><div><kbd>Space</kbd>跳跃</div><div><kbd>右键拖动</kbd>转动视角</div><div><kbd>Q</kbd>扫描因果</div><div><kbd>E</kbd>对话 / 打断点 / 登车</div><div><kbd>R</kbd>验证当前补丁</div><div><kbd>M / Tab</kbd>城市地图</div><div><kbd>T</kbd>切换晴雨</div><div><kbd>Esc</kbd>退出编辑 / 暂停</div></div><p class="modal-rule">手机：左侧摇杆移动，右侧空白处拖动视角。「溯源」扫描，向上按钮跳跃，屏幕中间的交互提示可直接点按。<br>指针港断点会冻结局部时间；脉冲炉天气工作台持续蓄能与散热。需要冻结设备时请打开暂停菜单。失败会保留证据。首城返航后，可从结算页、END 站或地图乘车前往第二城。</p>';
   else if(type==='settings')content.innerHTML=`<div class="eyebrow">SYSTEM PREFERENCES</div><h2 id="modal-title">调整你的世界。</h2><label class="setting-row"><span>环境音乐与反馈<small>原创合成音轨，故障与恢复使用不同编曲</small></span><input id="setting-sound" type="checkbox" ${settings.sound?'checked':''}></label><label class="setting-row"><span>画面细节<small>低画质减少雨滴并降低渲染分辨率</small></span><select id="setting-quality"><option value="high" ${settings.quality==='high'?'selected':''}>细致 / HIGH</option><option value="low" ${settings.quality==='low'?'selected':''}>流畅 / LOW</option></select></label><label class="setting-row"><span>降低动态效果<small>固定城市全景，减弱动态镜头变化</small></span><input id="setting-motion" type="checkbox" ${settings.reducedMotion?'checked':''}></label><label class="setting-row"><span>视角灵敏度</span><input id="setting-sensitivity" type="range" min="0.3" max="2" step="0.1" value="${settings.sensitivity}" aria-label="视角灵敏度"></label><div class="modal-actions"><button class="text-button" id="modal-fullscreen">切换全屏 ↗</button><button class="primary" id="modal-resume">完成 <span>→</span></button></div>`;
   else if(type==='map') {
-    content.innerHTML='<div class="eyebrow">SECTOR 01 / SYSTEM TOPOLOGY</div><h2 id="modal-title">指针港 · 因果地图</h2><div id="large-map"></div><div class="map-key"><span>◇ 琥珀：你的所在位置</span><span>红色：异常线路</span><span>细线：可达步道</span></div><p>下层港道 → 中层高架 → 上层核心观景台。<br>港区外为施工边界。列车能否停靠，取决于真实运行的 next 关系。</p><div class="chapter-list"><span class="active">01 指针港 / 可探索</span><span>02 脉冲炉 / 后续章节</span><span>03 千线程 / 后续章节</span></div>';
-    const map=$('mini-svg').cloneNode(true) as SVGSVGElement;map.removeAttribute('id');map.classList.add('modal-map');map.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));$('large-map').append(map);
-  } else content.innerHTML='<div class="eyebrow">RE:FLOW 404 / 断点之城</div><h2 id="modal-title">一个错误，也有存在的意义。</h2><p>CIVITAS 是一座运行中的城市。路网是数据结构，列车是执行事件，居民的名字是一条不能丢失的记录。<br>当清除署决定删除异常，零号选择先听懂它们。</p><p>本版本包含指针港的完整章节：三维探索、事件重排、链路修复、列车返航与自由漫游。脉冲炉及其他城市属于后续计划。</p><p class="modal-rule">城市、角色与声音由原创程序生成。运行中无需登录，不上传存档，不调用 AI 或第三方服务。存档仅保留在当前浏览器。</p><div class="modal-actions"><button class="primary" id="modal-resume">回到世界 <span>→</span></button><button class="text-button" id="modal-card-link">查看零号设定卡 ↗</button></div>';
+    content.innerHTML=`<div class="eyebrow">CIVITAS / 02 OF 08 CITIES OPEN</div><h2 id="modal-title">${forge.active?'脉冲炉 · 散热与进位':'指针港 · 因果地图'}</h2><div id="large-map"></div><p>${forge.active?'入城港道 → 集电台 → 散热桥 → 两段上行坡道 → 八位时钟塔 → 进位升降台。铜色边线与中间蓝色虚线指向主路。':'下层港道 → 中层高架 → 上层核心观景台。到 END 站可搭乘城际列车。'}</p><p>当前开放 2 座城市；其余 6 座为后续规划。两城进度分别保存，晴雨切换由右上天气控制。</p><div class="city-stops"><button id="map-dock">01 指针港 / ${forge.active?'乘车返回':'当前城市'}</button><button id="map-forge" ${campaign.data.chapter==='complete'?'':'disabled'}>02 脉冲炉 / ${campaign.data.chapter==='complete'?'乘车前往':'首城返航后开放'}</button>${['03 千线程','04 雨线城','05 镜库城','06 语法穹顶','07 最短夜','08 权限塔'].map(name=>`<span>${name} / 规划中</span>`).join('')}</div>`;
+    if(forge.active)$('large-map').innerHTML='<div class="forge-map-art"><b>☀ / ☂<br>集电台</b><i></i><b>╱<br>散热桥</b><i></i><b>8 BIT<br>时钟塔</b><i></i><b>↑<br>升降台</b></div>';
+    else {const map=$('mini-svg').cloneNode(true) as SVGSVGElement;map.removeAttribute('id');map.classList.add('modal-map');map.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));$('large-map').append(map);}
+    $('map-dock').onclick=()=>{if(forge.active)returnDock();else{closeModal();if(campaign.data.chapter==='complete')showResult();}};
+    $('map-forge').onclick=()=>{if(forge.active)closeModal();else enterForge();};
+  } else content.innerHTML='<div class="eyebrow">RE:FLOW 404 / 断点之城</div><h2 id="modal-title">一个错误，也有存在的意义。</h2><p>CIVITAS 是一座运行中的城市。路网是数据结构，列车是执行事件，居民的名字是一条不能丢失的记录。<br>当清除署决定删除异常，零号选择先听懂它们。</p><p>当前开放指针港与脉冲炉两城：事件重排、链路修复、城际旅行、晴雨蓄能散热、八位进位修复与升降台。八城总纲中的其余六城仍在规划中。</p><p class="modal-rule">城市、角色与声音由原创程序生成。运行中无需登录，不上传存档，不调用 AI 或第三方服务。存档仅保留在当前浏览器。</p><div class="modal-actions"><button class="primary" id="modal-resume">回到世界 <span>→</span></button><button class="text-button" id="modal-card-link">查看零号设定卡 ↗</button></div>';
   $('modal-resume')?.addEventListener('click',closeModal);
-  $('modal-checkpoint')?.addEventListener('click',()=>{closeModal();if(mode==='patch')closePatch();if(mode==='cinema'){toast('请先结束当前列车回放。');return;}motor.warp(motor.checkpoint);view.mode='follow';toast('已回到最近的安全检查点。');});
-  $('modal-menu')?.addEventListener('click',()=>{persist();closeModal();setMode('menu');view.mode='menu';world.showDraft(null);show('subtitle',false);dialogueIndex=-1;});
+  $('modal-checkpoint')?.addEventListener('click',()=>{closeModal();if(forge.active){forge.action('Escape');motor.warp(motor.checkpoint);if(!forge.blocked)view.mode='follow';toast('已回到脉冲炉最近的安全检查点。');return;}if(mode==='patch')closePatch();if(mode==='cinema'){toast('请先结束当前列车回放。');return;}motor.warp(motor.checkpoint);view.mode='follow';toast('已回到最近的安全检查点。');});
+  $('modal-menu')?.addEventListener('click',()=>{persist();closeModal();forge.hide();view.switchCity('dock');setMode('menu');view.mode='menu';world.showDraft(null);show('subtitle',false);dialogueIndex=-1;});
   $('modal-fullscreen')?.addEventListener('click',()=>{if(document.fullscreenElement)void document.exitFullscreen().catch(()=>toast('当前浏览器不支持退出全屏。'));else void document.documentElement.requestFullscreen().catch(()=>toast('当前浏览器不支持全屏。'));});
   $('modal-card-link')?.addEventListener('click',()=>{window.open(new URL('character-card.html',document.baseURI).href,'_blank','noopener');});
   $('setting-sound')?.addEventListener('change',e=>{settings.sound=(e.target as HTMLInputElement).checked;audio.setEnabled(settings.sound);applySettings();});
@@ -312,6 +350,8 @@ $('btn-skip-replay').onclick=finishCinema;$('btn-restart').onclick=()=>start();
 $('btn-roam').onclick=()=>{setMode('play');view.mode='follow';toast('城市还在运行。欢迎留下来。');};
 $('btn-copy-result').onclick=async()=>{const record=`RE:FLOW 404 · 指针港修复记录\n用时 ${clock(campaign.data.elapsed)} / ${campaign.data.attempts} 次实验 / ${campaign.data.counterexamples} 个反例\n线路：${traverse(campaign.data.rail).route.join(' → ')}\n系统找不到，不代表不存在。`;try{await navigator.clipboard.writeText(record);toast('修复记录已复制。');}catch{toast('浏览器未开放剪贴板权限。你可以截图保存结算。');}};
 $('btn-settings').onclick=()=>openModal('settings');$('btn-help').onclick=()=>openModal('help');$('btn-about').onclick=()=>openModal('about');
+$('btn-next-city').onclick=enterForge;$('btn-forge-travel').onclick=enterForge;
+$('weather-clear').onclick=()=>changeWeather('clear');$('weather-rain').onclick=()=>changeWeather('rain');
 $('btn-map').onclick=()=>openModal('map');$('tool-map').onclick=()=>openModal('map');$('btn-pause').onclick=()=>{persist();openModal('pause');};
 $('brand-button').onclick=()=>openModal(mode==='menu'?'about':'pause');$('btn-close-modal').onclick=closeModal;
 $('btn-sound').onclick=()=>{settings.sound=!settings.sound;audio.setEnabled(settings.sound);applySettings();};
@@ -325,6 +365,14 @@ input.onAction=key=>{
     if(key==='Tab') {const items=Array.from($('modal-card').querySelectorAll<HTMLElement>('button:not([disabled]),input,select'));const index=items.indexOf(document.activeElement as HTMLElement);const delta=input.keys.has('ShiftLeft')||input.keys.has('ShiftRight')?-1:1;items[(index+delta+items.length)%items.length]?.focus();}
     return;
   }
+  if(forge.active&&key==='Tab'&&forge.blocked){
+    const container=forge.panel?$('forge-workbench'):forge.cinema?$('forge-cinema'):$('forge-result');
+    const buttons=Array.from(container.querySelectorAll<HTMLButtonElement>('button:not([disabled])'));
+    const at=buttons.indexOf(document.activeElement as HTMLButtonElement),delta=input.keys.has('ShiftLeft')||input.keys.has('ShiftRight')?-1:1;
+    buttons[(at+delta+buttons.length)%buttons.length]?.focus({preventScroll:false});return;
+  }
+  if(forge.active&&forge.action(key))return;
+  if(key==='KeyT'){changeWeather(campaign.data.weather==='rain'?'clear':'rain');return;}
   if(key==='Escape') {if(mode==='patch')closePatch();else if(dialogueIndex>=0){dialogueIndex=dialogue.length;advanceDialogue();}else if(mode!=='menu'){persist();openModal('pause');}return;}
   if(key==='KeyQ')scan();if(key==='KeyE')interact();if(key==='KeyR'&&mode==='patch')verify();
   if((key==='KeyM'||key==='Tab')&&mode==='play')openModal('map');
@@ -358,16 +406,17 @@ function frame(timestamp:number):void {
   if(!paused) {
     now+=dt;
     if(mode==='play'||mode==='patch')campaign.data.elapsed+=dt;
-    if(mode==='play'&&dialogueIndex<0) {
+    if(forge.active)forge.tick(dt);
+    if(mode==='play'&&dialogueIndex<0&&!forge.blocked) {
       accumulator+=dt;let steps=0;
       while(accumulator>=STEP&&steps<5){
         if(motor.step(STEP,input.intent(view.yaw)))toast('零号已从最近的安全检查点恢复。',3);
         accumulator-=STEP;steps++;
       }
       if(steps===5)accumulator=0;
-      world.hero.group.rotation.y=motor.facing;
+      if(!forge.active)world.hero.group.rotation.y=motor.facing;
       if(motor.speed>1&&now-lastStep>.4&&motor.grounded){audio.cue('step');lastStep=now;}
-      if(campaign.data.chapter==='rail'&&motor.position.y>12&&distance(motor.position,STATION_POS.A)<12)motor.setCheckpoint(A_CHECKPOINT);
+      if(!forge.active&&campaign.data.chapter==='rail'&&motor.position.y>12&&distance(motor.position,STATION_POS.A)<12)motor.setCheckpoint(A_CHECKPOINT);
     } else accumulator=0;
     if(mode==='cinema') {
       const age=now-cinemaStart;
@@ -389,14 +438,14 @@ function frame(timestamp:number):void {
   }
   view.render(dt,motor.position,mode==='play'?motor.speed:0,paused||dialogueIndex>=0);
   hudAccumulator+=dt;if(hudAccumulator>.07){hudAccumulator=0;if(mode==='play')updateHud();}
-  if(mode==='patch'&&patchCase==='DS-01')positionNodes();
+  if(mode==='patch'&&patchCase==='DS-01'&&!forge.active)positionNodes();
   if(!$('performance').hidden){const stats=view.getDrawStats();setText('performance',`${view.fps} FPS / ${view.frameMs.toFixed(1)} ms\n${stats.calls} draws · ${(stats.triangles/1000).toFixed(1)}k tris`);}
 }
 applySettings();syncWorld();requestAnimationFrame(frame);
 requestAnimationFrame(()=>{show('loading',false);$('app').dataset.ready='true';});
 
 // Read-only production diagnostics; movement and state mutation only exist in development.
-const diagnostics=()=>({mode,chapter:campaign.data.chapter,position:{...motor.position},grounded:motor.grounded,elapsed:campaign.data.elapsed,
+const diagnostics=()=>({mode,city:campaign.data.city,forge:structuredClone(campaign.data.forge),weather:campaign.data.weather,chapter:campaign.data.chapter,position:{...motor.position},grounded:motor.grounded,elapsed:campaign.data.elapsed,
   attempts:campaign.data.attempts,evidence:[...campaign.data.evidence],rail:structuredClone(campaign.data.rail),order:[...campaign.data.order],
   proof:proof?structuredClone(proof):null,paused:modalType!==null,modal:modalType,bridge:world.bridgeFixed,railFixed:world.railFixed,
   route:[...world.trainRoute],draw:view.getDrawStats(),fps:view.fps,falls:motor.falls,checkpoint:{...motor.checkpoint},audioOn:settings.sound});

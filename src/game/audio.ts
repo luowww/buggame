@@ -8,6 +8,7 @@ export class CityAudio {
   private beat = 0;
   private next = 0;
   recovered = false;
+  city: 'dock'|'forge' = 'dock';
   unlock(): void {
     try {
       if(!this.ctx){this.ctx=new AudioContext();this.bus=this.ctx.createGain();this.bus.gain.value=0;const limiter=this.ctx.createDynamicsCompressor();limiter.threshold.value=-16;limiter.ratio.value=6;this.bus.connect(limiter);limiter.connect(this.ctx.destination);}
@@ -43,7 +44,11 @@ export class CityAudio {
       if(this.beat%4===0){this.tone(notes[Math.floor(this.beat/4)%8]/2,at,2.5,.09,'sine');this.tone(notes[Math.floor(this.beat/4)%8],at,3,.025,'triangle');}
       if(this.beat%2===0)this.tone(notes[(this.beat/2)%8]*2,at,1.3,this.recovered ? .027 : .013,'sine');
       if(this.beat%4===0)this.tone(43,at,.14,.11);
-      this.beat++;this.next+=60/88/2;
+      if(this.city==='forge'){
+        if(this.beat%2===1)this.tone(110*(1+this.beat%3),at,.06,.018,'square');
+        if(this.beat%8===4)this.tone(55,at,.16,.08,'triangle');
+      }
+      this.beat++;this.next+=60/(this.city==='forge'?110:88)/2;
     }
   }
   cue(kind:'scan'|'select'|'fail'|'success'|'step'|'jump'): void {

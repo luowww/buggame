@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#10272e" />
-  <meta name="description" content="RE:FLOW 404《断点之城》：探索一座正在运行的三维故障港城，扫描事件、改写因果、重放世界。系统找不到你，不代表你不存在。" />
+  <meta name="description" content="RE:FLOW 404《断点之城》：探索指针港与脉冲炉，修复因果线路，用晴雨蓄能散热，让八位进位重新点亮城市。" />
   <title>RE:FLOW 404 · 断点之城</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23101d24'/%3E%3Cpath d='M43 15a22 22 0 1 1-22 0' fill='none' stroke='%23ffca7b' stroke-width='6'/%3E%3Ccircle cx='33' cy='33' r='4' fill='%23ff4f63'/%3E%3C/svg%3E" />
 </head>
@@ -25,10 +25,10 @@
     <main id="menu" class="menu-screen">
       <div class="menu-copy">
         <div class="eyebrow"><i></i> A CITY THAT RUNS ON ERRORS.</div>
-        <div class="edition mono">RE:FLOW 404 <span>—</span> EPISODE 01</div>
+        <div class="edition mono">RE:FLOW 404 <span>—</span> CHAPTERS 01 + 02</div>
         <h1>断点<span>之城</span><em>BREAK THE LOOP.</em></h1>
         <p class="menu-description">系统说你不存在。<br>但这座城市，<strong>还在等你修复。</strong></p>
-        <p class="menu-sub">潜入运行中的故障都市。看见因果，改写失序，<br class="desktop-break">让一座被遗忘的车站，重新回到世界。</p>
+        <p class="menu-sub">从雨中的指针港，前往晴雨交替的脉冲炉。<br class="desktop-break">修复被遗忘的车站，守住越过边界的进位。</p>
         <div class="start-actions"><button id="btn-start" class="primary"><span>进入指针港</span><span class="arrow">↗</span></button><button id="btn-continue" class="text-button" hidden>继续旅程 <span>→</span></button></div>
         <div class="menu-controls"><span><kbd>W A S D</kbd> 探索</span><span><kbd>Q</kbd> 溯源</span><span><kbd>E</kbd> 改写</span></div>
       </div>
@@ -36,9 +36,10 @@
       <div class="menu-alert mono"><span class="error-indicator"></span> GLOBAL ASSERTION FAILED <span class="alert-detail">A.next → C &nbsp; / &nbsp; B: UNREACHABLE</span></div>
       <footer class="menu-footer"><span class="mono">NULL · ZERO <i>/</i> 因果调查员 000</span><span>探索 · 推理 · 修复</span><button id="btn-about" class="text-button">关于这个世界 <span>↗</span></button></footer>
     </main>
+    <div id="weather-control" aria-label="天气控制"><span class="mono">WEATHER</span><button id="weather-clear" aria-pressed="false">☀ 晴天</button><button id="weather-rain" aria-pressed="true">☂ 雨天</button></div>
     <section id="hud" hidden aria-label="游戏信息">
       <div class="compass mono" aria-hidden="true"><span>W</span><i></i><span class="compass-n">N</span><i></i><span>E</span></div>
-      <aside class="objective"><div class="objective-kicker mono"><span id="quest-code">PROLOGUE / 00</span><span class="quest-line"></span></div><h2 id="quest-title">找到站长 MIRA</h2><p id="quest-description">沿着港口灯带向前。有人在等你。</p><div class="quest-distance mono" id="quest-distance"></div><button class="objective-hint" id="btn-hint">需要一点线索？ <span>↗</span></button></aside>
+      <aside class="objective"><div class="objective-kicker mono"><span id="quest-code">PROLOGUE / 00</span><span class="quest-line"></span></div><h2 id="quest-title">找到站长 MIRA</h2><p id="quest-description">沿着港口灯带向前。有人在等你。</p><div class="quest-distance mono" id="quest-distance"></div><button class="objective-hint" id="btn-hint">需要一点线索？ <span>↗</span></button><button id="btn-forge-travel" class="text-button" hidden>乘城际列车 · 前往脉冲炉 →</button></aside>
       <div id="world-markers"></div>
       <div id="interact-prompt" hidden><button id="btn-interact"><kbd>E</kbd><span id="interact-label">与 MIRA 对话</span><span class="prompt-arrow">↗</span></button></div>
       <div class="identity"><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M20 4a12 12 0 1 1-10 0"/><circle cx="15" cy="15" r="2"/></svg><div><b>NULL · ZERO</b><span class="mono" id="identity-status">身份未知 / UNKNOWN</span></div><div class="identity-bars"><i></i><i></i><i></i></div></div>
@@ -58,7 +59,7 @@
     <div id="subtitle" hidden><span id="speaker">MIRA</span><p id="subtitle-text"></p><button id="btn-dialogue">继续 <kbd>E</kbd> →</button></div>
     <div id="cinema" hidden><div class="cinema-top mono"><span>WORLD REPLAY</span><span id="replay-id"></span></div><div class="cinema-bottom"><div class="eyebrow" id="cinema-label">REBUILDING CAUSALITY</div><h2 id="cinema-title">把被跳过的人，接回世界。</h2><p id="cinema-detail"></p><button id="btn-skip-replay" class="text-button">跳过镜头 <span>→</span></button></div></div>
     <div id="modal-layer" hidden><section id="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="close-button modal-close" id="btn-close-modal" aria-label="关闭">×</button><div id="modal-content"></div></section></div>
-    <section id="result" hidden><div class="result-copy"><div class="eyebrow">CHAPTER 01 / RESTORED</div><div class="result-code">200 <span>OK</span></div><h2>系统找到了车站。<br>她找到了回家的路。</h2><p>你没有删除那个错误。<br>你听见了它想说的话。</p><div id="result-stats"></div><div class="result-actions"><button id="btn-roam" class="primary"><span>留在这座城市</span><span>↗</span></button><button id="btn-restart" class="text-button">重新修复 <span>↶</span></button></div><button id="btn-copy-result" class="text-button">复制本次修复记录 <span>↗</span></button><div class="next-chapter"><span class="mono">BEYOND THE DOCK</span><span>下一程：脉冲炉 <small>后续章节 · 尚未开放</small></span></div></div></section>
+    <section id="result" hidden><div class="result-copy"><div class="eyebrow">CHAPTER 01 / RESTORED</div><div class="result-code">200 <span>OK</span></div><h2>系统找到了车站。<br>她找到了回家的路。</h2><p>你没有删除那个错误。<br>你听见了它想说的话。</p><div id="result-stats"></div><div class="result-actions"><button id="btn-next-city" class="primary">乘城际列车出发 →</button><button id="btn-roam" class="text-button"><span>留在这座城市</span><span>↗</span></button><button id="btn-restart" class="text-button">重新修复 <span>↶</span></button></div><button id="btn-copy-result" class="text-button">复制本次修复记录 <span>↗</span></button><div class="next-chapter"><span class="mono">BEYOND THE DOCK / 02</span><span>下一程：脉冲炉 <small>新城市 · 晴雨交互 · 进位升降台</small></span></div></div></section>
     <div id="loading"><div class="loading-ring"></div><span class="mono">RE:FLOW 404</span><p>正在唤醒指针港…</p></div>
     <div id="boot-error" hidden><h1>暂时无法唤醒城市。</h1><p id="boot-error-detail">请使用支持 WebGL 2 的现代浏览器，并开启硬件加速。</p><button onclick="location.reload()" class="primary">重新载入 →</button></div>
     <div id="performance" hidden class="mono"></div>

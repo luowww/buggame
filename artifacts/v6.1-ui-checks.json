@@ -1,0 +1,130 @@
+{
+  "version": "6.1.0",
+  "date": "2026-10-24",
+  "method": "CUA normal UI; production builds; no state injection or development teleports",
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "checks": [
+    {
+      "check": "旧 V6 通关存档迁移并进入第二城",
+      "passed": true
+    },
+    {
+      "check": "开闸雨天保电回归拒绝",
+      "passed": true,
+      "sample": "97.7% → 73.7%"
+    },
+    {
+      "check": "隔离后雨天保电与降温通过",
+      "passed": true,
+      "sample": "95.4% → 95.4%, 20°C"
+    },
+    {
+      "check": "ZERO 接线具体反例",
+      "passed": true,
+      "sample": "0+0 误触发；255+255 漏触发；32,386 个反例"
+    },
+    {
+      "check": "POWER 接线拒绝",
+      "passed": true
+    },
+    {
+      "check": "CARRY 完整 65,536 输入回归通过",
+      "passed": true
+    },
+    {
+      "check": "未提交 CARRY 草案关闭后撤销",
+      "passed": true
+    },
+    {
+      "check": "桌面升降台与第二城结算",
+      "passed": true
+    },
+    {
+      "check": "第二城通关可重载并跨城往返",
+      "passed": true
+    },
+    {
+      "check": "地图区分两城开放与六城规划",
+      "passed": true
+    },
+    {
+      "check": "首城初始排序拒绝，正确排序提交",
+      "passed": true
+    },
+    {
+      "check": "首城实走高架并乘完整返航列车",
+      "passed": true
+    },
+    {
+      "check": "重玩时清理上一局结算覆盖",
+      "passed": true
+    },
+    {
+      "check": "390×844 真实摇杆与触屏溯源进入工作台",
+      "passed": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "check": "升温设备在暂停时冻结",
+      "passed": true,
+      "temperature": "20.8°C"
+    },
+    {
+      "check": "手机摇杆完整登塔与 CARRY 触屏提交",
+      "passed": true
+    },
+    {
+      "check": "手机完成进位升降台结算",
+      "passed": true
+    },
+    {
+      "check": "首城自环复测",
+      "passed": true
+    },
+    {
+      "check": "V6.1 首城实际返航结算及新版入口可见",
+      "passed": true
+    },
+    {
+      "check": "更新后的首城结算主按钮进入第二城",
+      "passed": true
+    },
+    {
+      "check": "最终几何虚线：实走高架、自环拒绝、正确路线预演",
+      "passed": true
+    }
+  ],
+  "interruptedAttempts": [
+    {
+      "check": "V6.1 首城自环仍被具体拒绝",
+      "passed": false,
+      "resolution": "WebGL context reclaimed during multiple QA tabs; closed old tabs, reloaded checkpoint and passed 首城自环复测."
+    }
+  ],
+  "consoleErrors": [
+    {
+      "level": "error",
+      "message": "THREE.WebGLProgram: Shader Error 0 - VALIDATE_STATUS false\n\nMaterial Name: \nMaterial Type: LineDashedMaterial\n\nProgram Info Log: \n\n",
+      "timestamp": "2026-10-24T15:34:35.304Z",
+      "url": "http://localhost:5388/assets/index-C7b78sYX.js"
+    }
+  ],
+  "notes": [
+    "Phone viewport emulation on desktop Chromium, not physical handset certification.",
+    "Image snapshots retain actual metrics and current workbench scroll position.",
+    "Historical LineDashedMaterial validation error retained above. Final build uses geometry dashes and a clean browser run reports no console errors."
+  ],
+  "finalConsoleErrors": []
+}

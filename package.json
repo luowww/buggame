@@ -1,9 +1,9 @@
 {
   "name": "reflow-404",
   "private": true,
-  "version": "6.0.0",
+  "version": "6.1.0",
   "type": "module",
-  "description": "RE:FLOW 404《断点之城》——探索三维故障港城，扫描事件、改写因果、重放验证，让被遗忘的车站重新回到世界。",
+  "description": "RE:FLOW 404《断点之城》——指针港与脉冲炉双城探索，晴雨交互、因果修复与八位进位升降台。",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -17,7 +17,9 @@
     "vite": "^8.3.5",
     "vitest": "^5.0.5"
   },
-  "engines": { "node": ">=24.0.0" },
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "dependencies": {
     "three": "^0.186.1"
   }

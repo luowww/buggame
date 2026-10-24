@@ -32,7 +32,7 @@ function facade(seed: number): T.CanvasTexture {
   return texture;
 }
 
-function deckTexture(): T.CanvasTexture {
+export function deckTexture(): T.CanvasTexture {
   const canvas=document.createElement('canvas');canvas.width=canvas.height=256;
   const ctx=canvas.getContext('2d')!,random=rng(654);
   ctx.fillStyle='#667674';ctx.fillRect(0,0,256,256);
@@ -401,8 +401,11 @@ export class CityWorld {
       if(!to) continue;
       const a=NODE_POS[from as Station],b=NODE_POS[to];
       const curve=from===to?new T.CatmullRomCurve3([vec(a),vec(a).add(new T.Vector3(5,4,0)),vec(a).add(new T.Vector3(0,5,4)),vec(a)]):this.curve(a,b,6);
-      const geometry=new T.BufferGeometry().setFromPoints(curve.getPoints(60));
-      const line=new T.Line(geometry,new T.LineDashedMaterial({color:COLORS.amber,dashSize:.8,gapSize:.5,transparent:true,opacity:.85}));line.computeLineDistances();this.draftTrack.add(line);
+      // Bake dashes into geometry, sharing the existing basic-line shader on first edit.
+      const length=curve.getLength(),points:T.Vector3[]=[];
+      for(let d=0;d<length;d+=1.3)points.push(curve.getPointAt(d/length),curve.getPointAt(Math.min(d+.8,length)/length));
+      const geometry=new T.BufferGeometry().setFromPoints(points);
+      this.draftTrack.add(new T.LineSegments(geometry,new T.LineBasicMaterial({color:COLORS.amber,transparent:true,opacity:.85})));
     }
   }
   setBridge(fixed: boolean): void {

@@ -2,12 +2,19 @@ import * as T from 'three';
 import { CityWorld, NODE_POS, STATION_POS } from './world';
 import type { Settings, Station } from './domain';
 import type { V3 } from './physics';
+import { PulseWorld } from './pulse-world';
+import { WeatherRig } from './weather';
+import type { Weather } from './forge-domain';
 
-export type ViewMode = 'menu' | 'follow' | 'order' | 'rail' | 'recovery' | 'ride' | 'result';
+export type ViewMode = 'menu' | 'follow' | 'order' | 'rail' | 'recovery' | 'ride' | 'result' | 'forge-arrival' | 'forge-power' | 'forge-alu' | 'forge-rise' | 'forge-result';
 export class CityView {
   renderer: T.WebGLRenderer;
   camera = new T.PerspectiveCamera(62,1,.15,1300);
   world = new CityWorld();
+  dockWeather = new WeatherRig(this.world.scene,false,this.world.sky,this.world.rain);
+  forge: PulseWorld | null = null;
+  city: 'dock' | 'forge' = 'dock';
+  weather: Weather = 'rain';
   mode: ViewMode = 'menu';
   yaw = 0;
   pitch = .34;
@@ -45,6 +52,13 @@ export class CityView {
     this.settings=settings;
     this.renderer.setPixelRatio(Math.min(devicePixelRatio,settings.quality==='low'?1:1.65));
     this.world.setQuality(settings.quality==='low');
+    this.dockWeather.setQuality(settings.quality==='low');this.forge?.setQuality(settings.quality==='low');
+  }
+  switchCity(city:'dock'|'forge'):void {
+    this.city=city;
+    if(city==='forge'&&!this.forge){this.forge=new PulseWorld();this.forge.setQuality(this.settings.quality==='low');}
+    this.warmup=true;
+    this.renderer.domElement.setAttribute('aria-label',`${city==='forge'?'脉冲炉':'指针港'}三维场景；WASD 移动，右键看四周，Q 扫描，E 互动`);
   }
   resize(): void {
     this.width=window.innerWidth;this.height=window.innerHeight;
@@ -72,11 +86,24 @@ export class CityView {
   }
   render(dt: number,hero: V3,speed: number,paused: boolean): void {
     this.elapsed+=dt;
-    this.world.update(paused?0:dt,hero,paused?0:speed,paused||this.mode==='order'||this.mode==='rail',this.settings.reducedMotion);
+    const active=this.city==='forge'&&this.forge?this.forge:this.world;
+    active.update(paused?0:dt,hero,paused?0:speed,paused||this.mode==='order'||this.mode==='rail',this.settings.reducedMotion);
+    if(active===this.world){this.dockWeather.weather=this.weather;this.dockWeather.update(paused?0:dt,hero,this.settings.reducedMotion,this.world.surfaces);}
+    else if(this.forge)this.forge.weather.weather=this.weather;
     this.world.nodes.visible=this.mode==='rail';
     if(this.mode==='menu') {
       const drift=this.settings.reducedMotion?0:Math.sin(this.elapsed*.07)*1.8;
       this.desired.set(6+drift,27,55);this.target.set(14,26,-70);
+    } else if(this.mode==='forge-arrival') {
+      this.desired.set(-25,58,65);this.target.set(5,31,-62);
+    } else if(this.mode==='forge-power') {
+      this.desired.set(this.width<700?20:24,19,29);this.target.set(0,7,5);
+    } else if(this.mode==='forge-alu') {
+      this.desired.set(this.width<700?-24:-28,56,-35);this.target.set(9,39,-81);
+    } else if(this.mode==='forge-rise') {
+      this.desired.set(-30,hero.y+20,-53);this.target.set(7,hero.y+4,-86);
+    } else if(this.mode==='forge-result') {
+      this.desired.set(-35,86,-18);this.target.set(10,37,-73);
     } else if(this.mode==='rail') {
       // The central corridor avoids dock towers occluding the editable rail geometry.
       if(this.width<700){this.desired.set(28,164,27);this.target.set(28,13,-35);}
@@ -95,7 +122,7 @@ export class CityView {
       this.desired.set(hero.x+Math.sin(yaw)*distance,hero.y+2.2+Math.sin(this.pitch)*distance,hero.z+Math.cos(yaw)*distance);
       const direction=this.desired.clone().sub(this.target);const length=direction.length();direction.normalize();
       this.ray.set(this.target,direction);
-      for(const box of this.world.solids) {
+      for(const box of active.solids) {
         const hit=this.ray.intersectBox(box,new T.Vector3());
         if(hit) {const d=hit.distanceTo(this.target);if(d<length)this.desired.copy(this.target).addScaledVector(direction,Math.max(1.5,d-.5));}
       }
@@ -104,7 +131,7 @@ export class CityView {
     this.camera.position.lerp(this.desired,response);this.look.lerp(this.target,response);this.camera.lookAt(this.look);
     const fov=this.mode==='rail'?53:this.mode==='order'?54:62;
     if(Math.abs(this.camera.fov-fov)>.01){this.camera.fov=T.MathUtils.damp(this.camera.fov,fov,5,dt);this.camera.updateProjectionMatrix();}
-    this.renderer.render(this.world.scene,this.camera);this.warmup=false;
+    this.renderer.render(active.scene,this.camera);this.warmup=false;
     this.frames++;this.sampleTime+=dt;
     if(this.sampleTime>=1){this.fps=Math.round(this.frames/this.sampleTime);this.frameMs=this.sampleTime/this.frames*1000;this.frames=0;this.sampleTime=0;}
   }
