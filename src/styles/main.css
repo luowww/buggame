@@ -272,6 +272,43 @@ body {
 .site-card.b { background: var(--page-acid); border-top-color: #141a14; }
 .site-card b { font-size: 19px; }
 
+/* ---- L3 真实 <details> 折叠规则：展开会挤动平台 ---- */
+.rule-details {
+  position: absolute; left: 40px; top: 168px;
+  width: min(420px, 60%); z-index: 7;
+  border: 1px dashed rgba(217, 255, 72, 0.5);
+  border-radius: 6px;
+  background: rgba(22, 25, 27, 0.9);
+  color: var(--page-soft);
+}
+.rule-details summary {
+  cursor: pointer; list-style: none;
+  padding: 9px 12px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.06em; color: var(--page-acid);
+  min-height: 44px; display: flex; align-items: center;
+}
+.rule-details summary::-webkit-details-marker { display: none; }
+.rule-details[open] summary { border-bottom: 1px dashed rgba(217, 255, 72, 0.3); }
+.rule-details .rule-body {
+  padding: 8px 12px 10px;
+  font-size: 11px; line-height: 1.7; color: var(--page-dim);
+}
+
+/* ---- 装饰块：真实网页内容，不承重 ---- */
+.site-deco {
+  position: absolute;
+  display: flex; align-items: center;
+  padding: 0 10px;
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em;
+  color: rgba(244, 240, 231, 0.22);
+  border: 1px solid rgba(244, 240, 231, 0.08);
+  border-radius: 4px;
+  background: rgba(244, 240, 231, 0.02);
+  pointer-events: none; z-index: 2;
+  white-space: nowrap; overflow: hidden;
+}
+
 /* ---- 残影：消失的真实布局留下的短寿命平台 ---- */
 #ghost-layer { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
 .v5-ghost {

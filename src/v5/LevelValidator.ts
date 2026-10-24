@@ -99,6 +99,12 @@ function stepNode(
   void geometry;
 
   const x = node.x + level.hero.speed * DT;
+  // 清理线追上即删（与 RunnerSim 相同阈值）
+  const cleanerX =
+    level.cleaner && level.cleaner.speed > 0
+      ? level.cleaner.startX + level.cleaner.speed * tick * DT
+      : -1e9;
+  if (x - cleanerX < 16) return null;
   const ok = supported(x, level, mode, ghosts);
   const unsupported = ok ? 0 : node.unsupported + 1;
   if (unsupported * DT > level.hero.coyote) return null;
@@ -138,6 +144,8 @@ export function solveLevel(
   const visited = new Set<string>([keyOf(initial)]);
   let explored = 0;
   while (queue.length) {
+    // best-first：优先探索切换更少的分支（快速找到最短解，防止状态爆炸）
+    queue.sort((a, b) => a.refCount - b.refCount || a.tick - b.tick);
     const n = queue.shift()!;
     explored++;
     if (n.x >= level.hero.goalX) {

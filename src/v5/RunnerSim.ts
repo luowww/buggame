@@ -75,11 +75,24 @@ export class RunnerSim {
     return null;
   }
 
+  /** 清理线当前世界 x（<0 表示尚未进场） */
+  cleanerX(): number {
+    return this.level.cleaner.speed > 0
+      ? this.level.cleaner.startX + this.level.cleaner.speed * this.worldTime
+      : -1e9;
+  }
+
   /** 固定步长推进（主循环 1/60；求解器 0.1 也走这里） */
   tick(dt: number, geo: SupportGeometry): void {
     if (this.finished) return;
     this.worldTime += dt;
     this.state.x += this.level.hero.speed * dt;
+    // 清理线追上即删（规格 §16.2「掉落 / 删除」失败条件）
+    if (this.level.cleaner.speed > 0 && this.state.x - this.cleanerX() < 16) {
+      this.finished = true;
+      this.events.push({ type: 'GAME_LOST', reason: 'cleaner' });
+      return;
+    }
     const on = this.supportAt(this.state.x, geo);
     if (on) {
       if (this.state.landedOn !== on) {

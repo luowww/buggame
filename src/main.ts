@@ -112,9 +112,9 @@ function loadLevel(index: number): void {
   });
   // HUD
   caseLabel.textContent = level.subtitle;
-  caseCounter.textContent = `0${index + 1} / 0${LEVELS_V5.length}`;
+  caseCounter.textContent = `0${index + 1} / 0${LEVELS_V5.length} · PAR ${level.par}`;
   hudStage.textContent = `CASE 0${index + 1}/0${LEVELS_V5.length}`;
-  hudGoal.textContent = level.id === 'L1' ? '跨过 690px，让旧桥留下残影' : '电脑→平板→手机，两代旧桥接力';
+  hudGoal.textContent = `${level.title} · PAR ${level.par}`;
   ttlNote.textContent = String(level.ghostTtl);
   progressFill.style.width = `${(index / LEVELS_V5.length) * 100}%`;
   // 预设按钮（≥44px 触控）
@@ -139,7 +139,14 @@ function loadLevel(index: number): void {
     sp.className = 'spacer';
     presetRow.insertBefore(sp, btnRetry);
   }
+  slider.min = '700';
+  slider.max = '1440';
   slider.value = String(level.sim.width);
+  // L3：真实 <details> 展开改变布局——提示与音效反馈
+  view.onDetailsToggle((open) => {
+    audioDirector.cue(open ? 'edit.snap' : 'ui.hover.actionable');
+    tip(open ? '规则展开了 · 卡片被挤到新的物理位置' : '规则已折叠 · 布局回到原位', 2.6);
+  });
   elapsed = 0;
   refreshHud();
   renderFrame();
@@ -209,6 +216,7 @@ function renderFrame(): void {
   view.renderHero(sim.hero.x, sim.hero.fallSink, running);
   view.updateCamera(sim.hero.x, running);
   view.renderGhosts(echo ? echo.active(sim.time) : [], sim.time);
+  view.renderCleaner(sim.cleanerX(), level.worldW);
 }
 
 function refreshHud(): void {
@@ -256,17 +264,17 @@ function onLevelWon(): void {
   const reflows = world?.reflowCount ?? 0;
   totalReflows += reflows;
   audioDirector.playRescuePhrase();
-  if (levelIdx === 0) {
-    // CASE 01 → 02 过场（轻量，不打断节奏）
-    tip('CASE 01 · 200 OK → 前往第二幕：一段路，两份过去', 2.4);
-    cineTimers.push(window.setTimeout(() => loadLevel(1), 1500));
+  if (levelIdx < LEVELS_V5.length - 1) {
+    // 过场（轻量，不打断节奏）
+    tip(`CASE 0${levelIdx + 1} · 200 OK → 前往：${LEVELS_V5[levelIdx + 1]!.title}`, 2.6);
+    cineTimers.push(window.setTimeout(() => loadLevel(levelIdx + 1), 1600));
   } else {
     progressFill.style.width = '100%';
     cineTimers.push(window.setTimeout(() => showEnd('VICTORY'), 600));
   }
 }
 
-function onLevelLost(reason: 'no-switch' | 'ghost-expired' | 'gap'): void {
+function onLevelLost(reason: 'no-switch' | 'ghost-expired' | 'gap' | 'cleaner'): void {
   audioDirector.onFail();
   cineTimers.push(window.setTimeout(() => showEnd('FAIL', reason), 500));
 }
@@ -284,9 +292,10 @@ function showEnd(kind: 'VICTORY' | 'FAIL', reason?: string): void {
     const bestNow = loadBest();
     bestLine.textContent = bestNow !== null ? `BEST · ${bestNow} RE:FLOW${bestNow === 1 ? '' : 'S'}` : '';
     endTitle.innerHTML = '你让消失的<br/>东西留下来了。';
+    const parTotal = LEVELS_V5.reduce((a, l) => a + l.par, 0);
     endStats.innerHTML = `
-      <span class="stat-line show">200 OK · RESCUED WITH ${totalReflows} RE:FLOW${totalReflows === 1 ? '' : 'S'}</span>
-      <span class="stat-line show">两代排版接力 · 用网页的过去救出了 404</span>`;
+      <span class="stat-line show">200 OK · RESCUED WITH ${totalReflows} RE:FLOW${totalReflows === 1 ? '' : 'S'} · PAR ${parTotal}</span>
+      <span class="stat-line show">三幕通关 · 用网页的过去救出了 404</span>`;
     btnRetryAct.textContent = '再救一次 ↗';
     btnChallenge.hidden = false;
     btnChallenge.textContent = `挑战更少切换（当前 ${totalReflows}）`;
@@ -472,6 +481,8 @@ if (import.meta.env.DEV || DEBUG) {
     resume: () => setPaused(false),
     phase: () => (sim ? (sim.done ? (sim.hero.x >= level.hero.goalX ? 'won' : 'lost') : 'running') : 'ready'),
     heroX: () => sim?.hero.x ?? 0,
+    cleanerX: () => sim?.cleanerX() ?? -1e9,
+    detailsOpen: () => view?.isDetailsOpen() ?? false,
     time: () => sim?.time ?? 0,
   };
 }

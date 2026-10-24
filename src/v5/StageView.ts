@@ -45,24 +45,38 @@ export class StageView {
     }
     const goal = `<div class="v5-exit" style="left:${lv.hero.goalX - 18}px;top:${RULES.DECK_Y - 54}px">200 OK<small>EXIT ↗</small></div>`;
     const cards = lv.platforms
+      .map((p) => {
+        if (p.tiedToDetails) {
+          return `<div class="site-card ${p.kind === 'button' ? 'b' : 'a'}" data-pid="${p.id}" data-label="${p.label}" style="top:${p.top}px;width:${p.w}px;height:${p.h}px">${p.text}</div>`;
+        }
+        return `<div class="site-card ${p.kind === 'button' ? 'b' : 'a'}" data-pid="${p.id}" data-label="${p.label}" style="top:${p.top}px;width:${p.w}px;height:${p.h}px">${p.text}</div>`;
+      })
+      .join('');
+    const details = lv.platforms.some((p) => p.tiedToDetails)
+      ? `<details class="rule-details"><summary>▸ RULE-01 · 折叠的排版规则（点我展开）</summary><div class="rule-body">这条规则展开后，会把下方卡片挤到新的物理位置——真实 DOM 的 getBoundingClientRect 随之改变。</div></details>`
+      : '';
+    this.world.style.width = `${this.worldW}px`;
+    const decos = (lv.decos ?? [])
       .map(
-        (p) =>
-          `<div class="site-card ${p.kind === 'button' ? 'b' : 'a'}" data-pid="${p.id}" data-label="${p.label}" style="top:${p.top}px;width:${p.w}px;height:${p.h}px">${p.text}</div>`,
+        (d) =>
+          `<div class="site-deco" style="left:${d.left}px;top:${d.top}px;width:${d.w}px;height:${d.h}px">${d.text}</div>`,
       )
       .join('');
     this.world.innerHTML = `
       <div class="v5-scaffold" aria-hidden="true">404<small>THIS PAGE IS COLLAPSING.</small></div>
-      <div class="v5-wayline" style="top:${RULES.DECK_Y}px"></div>
+      ${decos}
+      <div class="v5-wayline" style="top:${RULES.DECK_Y}px;width:${this.worldW}px"></div>
       ${deco.join('')}
       ${goal}
       <div class="sim-browser" id="sim-browser" style="left:${lv.sim.left}px;top:${lv.sim.top}px;width:${lv.sim.width}px;height:${lv.sim.height}px">
         <div class="sim-head"><span class="site-brand">MISSING.PA<b>GE</b></span><span class="site-nav"></span></div>
         <div class="site-description">A VERY IMPORTANT STORY<em>REMEMBER WHAT THE PAGE FORGOT</em></div>
+        ${details}
         ${cards}
         <div class="page-boundary"></div>
       </div>
       <div id="ghost-layer"></div>
-      <div class="v5-clearline" id="clearline"><label>404 / DELETE</label></div>
+      <div class="v5-clearline" id="clearline" style="opacity:0"><label>404 / DELETE · 清理中</label></div>
       <div class="zero" id="hero" aria-label="零四，小小的页面生命">
         <div class="body"></div><div class="eye a"></div><div class="eye b"></div><div class="feet"></div>
       </div>
@@ -74,13 +88,17 @@ export class StageView {
     this.fit();
   }
 
+  private get worldW(): number {
+    return this.level.worldW ?? RULES.WORLD_W;
+  }
+
   /** 适配舞台尺寸：PC 整世界缩放；手机窄幅 + 镜头跟随（规格 §16.3） */
   fit(): void {
     const w = this.stage.clientWidth;
     const mobile = w < 650;
     this.scale = mobile
-      ? Math.min(0.63, Math.max(0.49, w / 720))
-      : Math.min(1, w / RULES.WORLD_W);
+      ? Math.min(0.63, Math.max(0.42, w / 780))
+      : Math.min(1, w / this.worldW);
     this.stage.style.height = `${Math.round(RULES.WORLD_H * this.scale)}px`;
     this.applyCamera();
   }
@@ -92,8 +110,8 @@ export class StageView {
   updateCamera(heroX: number, running: boolean): void {
     const w = this.stage.clientWidth;
     if (w < 650) {
-      const max = Math.max(0, RULES.WORLD_W - w / this.scale);
-      this.cameraX = Math.max(0, Math.min(max, heroX - 340));
+      const max = Math.max(0, this.worldW - w / this.scale);
+      this.cameraX = Math.max(0, Math.min(max, heroX - 320));
     } else {
       this.cameraX = 0;
     }
@@ -103,6 +121,19 @@ export class StageView {
 
   setSimWidth(px: number): void {
     this.simBrowser.style.width = `${px}px`;
+  }
+
+  /** details 展开状态变化时通知（真实 DOM toggle 事件，几何读数自动跟随） */
+  onDetailsToggle(cb: (open: boolean) => void): void {
+    this.simBrowser.addEventListener('toggle', () => {
+      const d = this.simBrowser.querySelector('.rule-details') as HTMLDetailsElement | null;
+      cb(!!d?.open);
+    });
+  }
+
+  isDetailsOpen(): boolean {
+    const d = this.simBrowser.querySelector('.rule-details') as HTMLDetailsElement | null;
+    return !!d?.open;
   }
 
   /** 世界单位测量（先减 stage 原点再除 scale，规格 §15.2） */
@@ -142,6 +173,13 @@ export class StageView {
 
   clearGhosts(): void {
     this.ghostLayer.replaceChildren();
+  }
+
+  /** 清理线推进（世界单位） */
+  renderCleaner(x: number, worldW: number): void {
+    this.cleanLine.style.transform = `translate3d(${x}px,0,0)`;
+    this.cleanLine.style.opacity = x <= 1 ? '0' : '1';
+    void worldW;
   }
 
   /** 零四位置（世界单位；fallSink 是掉落视觉下沉） */

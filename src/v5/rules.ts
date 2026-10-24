@@ -2,7 +2,7 @@
 import type { BreakpointId } from './types';
 
 export const RULES = Object.freeze({
-  /** 世界尺寸（世界单位，非屏幕像素） */
+  /** 默认世界宽（关卡可用 level.worldW 覆盖） */
   WORLD_W: 1120,
   WORLD_H: 520,
   /** 平台顶部的世界 y——1D 桥模型的支撑线 */
@@ -12,8 +12,8 @@ export const RULES = Object.freeze({
   /** 平台纵向命中容差（原型 |y-390|<12） */
   DECK_PAD: 12,
   /** 拖动滑块的步进与范围 */
-  WIDTH_MIN: 480,
-  WIDTH_MAX: 840,
+  WIDTH_MIN: 700,
+  WIDTH_MAX: 1440,
   WIDTH_STEP: 10,
   /** 断点迟滞：进入 compact 需 ≤ cutoff-10，回 wide 需 > cutoff+10（规格 §15.4-1） */
   HYSTERESIS: 10,

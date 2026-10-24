@@ -65,8 +65,8 @@ export class BreakpointWorld {
   /** 提交新宽度（滑块/预设都会走到这里）。running 状态跨断点时先快照旧布局再改宽度。 */
   commit(nextRaw: number, running: boolean): WidthCommit {
     const next = Math.max(
-      480,
-      Math.min(840, Math.round(Number(nextRaw) / 10) * 10),
+      700,
+      Math.min(1440, Math.round(Number(nextRaw) / 10) * 10),
     );
     const now = this.worldTime();
     const nextMode = classifyWidth(next, this.level.cutoffs, this.mode);

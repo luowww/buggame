@@ -18,18 +18,18 @@ page.on('pageerror', (e) => errors.push(e.message));
 await page.goto(BASE, { waitUntil: 'networkidle' });
 await page.waitForTimeout(1200);
 
-// M01：840 vs 600 的 cardA.x 差 ≥150
+// M01：1440 vs 700 的 cardB.x 差 ≥150
 const rectA_wide = await page.evaluate(() => {
-  const r = window.__game.view().livePlatforms().find((p) => p.id === 'cardA');
+  const r = window.__game.view().livePlatforms().find((p) => p.id === 'cardB');
   return r.x;
 });
-await page.evaluate(() => window.__game.applyWidth(600));
+await page.evaluate(() => window.__game.applyWidth(700));
 await page.waitForTimeout(300);
 const rectA_compact = await page.evaluate(() => {
-  const r = window.__game.view().livePlatforms().find((p) => p.id === 'cardA');
+  const r = window.__game.view().livePlatforms().find((p) => p.id === 'cardB');
   return r.x;
 });
-check('M01', rectA_compact - rectA_wide >= 150, `wide cardA.x=${rectA_wide.toFixed(1)} compact=${rectA_compact.toFixed(1)} Δ=${(rectA_compact - rectA_wide).toFixed(1)}`);
+check('M01', Math.abs(rectA_compact - rectA_wide) >= 150, `wide cardA.x=${rectA_wide.toFixed(1)} compact=${rectA_compact.toFixed(1)} Δ=${(rectA_compact - rectA_wide).toFixed(1)}`);
 
 // 权威区间表校准：真实 DOMRect 与关卡表一致 ±2
 const cal = await page.evaluate(() => {
@@ -46,26 +46,28 @@ const calOk = cal.live.every((l) => {
 check('CAL', calOk, `${cal.mode} 实测 ${JSON.stringify(cal.live.map((l) => [l.id, Math.round(l.x), Math.round(l.w)]))} vs 表 ${JSON.stringify(cal.ref.map((l) => [l.id, l.x, l.w]))}`);
 
 // M02：跨断点快照 = 切换前位置 ±2
-await page.evaluate(() => window.__game.applyWidth(840));
+await page.evaluate(() => window.__game.applyWidth(1440));
 await page.evaluate(() => window.__game.start());
-await page.waitForTimeout(500);
-const before = await page.evaluate(() => window.__game.view().livePlatforms().find((p) => p.id === 'cardA').x);
-await page.evaluate(() => window.__game.applyWidth(600));
+await page.waitForTimeout(600);
+const before = await page.evaluate(() => window.__game.view().livePlatforms().find((p) => p.id === 'cardB').x);
+await page.evaluate(() => window.__game.applyWidth(700));
 await page.waitForTimeout(200);
 const ghost = await page.evaluate(() => {
-  const g = window.__game.echo().list.find((q) => q.id === 'cardA');
+  const g = window.__game.echo().list.find((q) => q.id === 'cardB');
   return g ? g.x : null;
 });
-check('M02', ghost !== null && Math.abs(ghost - before) <= 2, `切换前 cardA.x=${before.toFixed(1)} 残影 x=${ghost}`);
+check('M02', ghost !== null && Math.abs(ghost - before) <= 2, `切换前 cardB.x=${before.toFixed(1)} 残影 x=${ghost}`);
 
-// M06：L1 一次切换赢（0.9s 时切）
+// M06：L1 两次切换赢（1.4s 手机 → 6.0s 电脑）
 await page.evaluate(() => window.__game.loadLevel(0));
 await page.evaluate(() => window.__game.start());
-await page.waitForTimeout(900);
-await page.evaluate(() => window.__game.applyWidth(600));
+await page.waitForTimeout(1400);
+await page.evaluate(() => window.__game.applyWidth(700));
+await page.waitForTimeout(4600);
+await page.evaluate(() => window.__game.applyWidth(1440));
 await page.waitForFunction(`window.__game.phase() !== 'running'`, { timeout: 20000, polling: 100 });
 const phaseWin = await page.evaluate(() => window.__game.phase());
-check('M06', phaseWin === 'won', `L1 0.9s 切换 → ${phaseWin}`);
+check('M06', phaseWin === 'won', `L1 双切换 → ${phaseWin}`);
 
 // M07：L1 不切输
 await page.evaluate(() => window.__game.loadLevel(0));
@@ -74,25 +76,44 @@ await page.waitForFunction(`window.__game.phase() !== 'running'`, { timeout: 200
 const phaseLose = await page.evaluate(() => window.__game.phase());
 check('M07', phaseLose === 'lost', `L1 不切 → ${phaseLose}`);
 
-// L2：W→M→S 赢
+// L2：W→M→S→M→W 设计路线赢
 await page.evaluate(() => window.__game.loadLevel(1));
 await page.evaluate(() => window.__game.start());
-await page.waitForTimeout(700);
-await page.evaluate(() => window.__game.applyWidth(600));
 await page.waitForTimeout(1400);
-await page.evaluate(() => window.__game.applyWidth(480));
+await page.evaluate(() => window.__game.applyWidth(1000));
+await page.waitForTimeout(1200);
+await page.evaluate(() => window.__game.applyWidth(700));
+await page.waitForTimeout(2000);
+await page.evaluate(() => window.__game.applyWidth(1000));
+await page.waitForTimeout(1600);
+await page.evaluate(() => window.__game.applyWidth(1440));
 await page.waitForFunction(`window.__game.phase() !== 'running'`, { timeout: 25000, polling: 100 });
 const l2a = await page.evaluate(() => window.__game.phase());
-check('L2-WMS', l2a === 'won', `L2 0.7s→M, 2.1s→S → ${l2a}`);
+check('L2-WMSMW', l2a === 'won', `L2 四段接力 → ${l2a}`);
 
-// L2 反例：W→S 直跳输
+// L2 反例：不切输
 await page.evaluate(() => window.__game.loadLevel(1));
 await page.evaluate(() => window.__game.start());
-await page.waitForTimeout(800);
-await page.evaluate(() => window.__game.applyWidth(480));
 await page.waitForFunction(`window.__game.phase() !== 'running'`, { timeout: 25000, polling: 100 });
 const l2b = await page.evaluate(() => window.__game.phase());
-check('L2-WS-fail', l2b === 'lost', `L2 直接切手机 → ${l2b}`);
+check('L2-noswitch', l2b === 'lost', `L2 不切 → ${l2b}`);
+
+// L3：点开 details（真实点击 summary）+ 双切换赢；不点开输
+await page.evaluate(() => window.__game.loadLevel(2));
+await page.evaluate(() => window.__game.start());
+await page.click('.rule-details summary');
+await page.waitForTimeout(3200);
+await page.evaluate(() => window.__game.applyWidth(700));
+await page.waitForTimeout(1400);
+await page.evaluate(() => window.__game.applyWidth(1440));
+await page.waitForFunction(`window.__game.phase() !== 'running'`, { timeout: 25000, polling: 100 });
+const l3a = await page.evaluate(() => window.__game.phase());
+check('L3-details', l3a === 'won', `L3 展开+双切换 → ${l3a}`);
+await page.evaluate(() => window.__game.loadLevel(2));
+await page.evaluate(() => window.__game.start());
+await page.waitForFunction(`window.__game.phase() !== 'running'`, { timeout: 25000, polling: 100 });
+const l3b = await page.evaluate(() => window.__game.phase());
+check('L3-closed-fail', l3b === 'lost', `L3 不展开 → ${l3b}`);
 
 check('ERR', errors.length === 0, `页面异常 ${errors.length} ${errors.slice(0, 2).join('; ')}`);
 await page.screenshot({ path: 'artifacts/v5-desktop.png' });
@@ -114,10 +135,12 @@ const presetSize = await mpage.evaluate(() => {
   return { w: r.width, h: r.height };
 });
 check('M10', presetSize && presetSize.w >= 44 && presetSize.h >= 44, `预设按钮 ${JSON.stringify(presetSize)}`);
-// 手机可玩：点开始 → 预设切手机 → 赢
+// 手机可玩：L1 双切换赢
 await mpage.evaluate(() => window.__game.start());
-await mpage.waitForTimeout(800);
-await mpage.evaluate(() => window.__game.applyWidth(600));
+await mpage.waitForTimeout(1200);
+await mpage.evaluate(() => window.__game.applyWidth(700));
+await mpage.waitForTimeout(4600);
+await mpage.evaluate(() => window.__game.applyWidth(1440));
 await mpage.waitForFunction(`window.__game.phase() !== 'running'`, { timeout: 25000, polling: 100 });
 const mwin = await mpage.evaluate(() => window.__game.phase());
 check('M12-play', mwin === 'won', `手机端 L1 切换 → ${mwin}`);

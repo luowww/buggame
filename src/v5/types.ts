@@ -23,6 +23,8 @@ export interface PlatformDef {
   top: number;
   /** 各断点下相对 sim-browser 的 left（世界单位）——权威来源是生成的 @container CSS（L1 无 medium 档） */
   leftByMode: Partial<Record<BreakpointId, number>>;
+  /** L3：该卡片的位置被 <details> 展开状态驱动（真实 CSS 兄弟选择器） */
+  tiedToDetails?: boolean;
 }
 
 /** 权威几何区间（由 CSS 推导；Playwright 实测校准，供求解器离线验证） */
@@ -45,9 +47,15 @@ export interface PresetDef {
 }
 
 export interface LevelConfig {
-  id: 'L1' | 'L2';
+  id: 'L1' | 'L2' | 'L3';
   title: string;
   subtitle: string;
+  /** 世界宽（世界单位）；高固定 520 */
+  worldW: number;
+  /** 清理线：起点 x 与推进速度（世界单位/秒）；hero 被追上即删。speed 0 = 无清理线 */
+  cleaner: { startX: number; speed: number };
+  /** 该关标准杆（供挑战更少切换） */
+  par: number;
   /** sim-browser 在世界中的锚定 */
   sim: { left: number; top: number; width: number; height: number };
   /** 容器断点上限：≤ cutoffs.compact → compact；≤ cutoffs.medium → medium；否则 wide */
@@ -59,11 +67,13 @@ export interface LevelConfig {
   minReflowInterval: number;
   floors: FloorDef[];
   platforms: PlatformDef[];
+  /** 装饰元素（真实网页内容，不承重——视觉丰度 + 公平教学） */
+  decos?: DecoDef[];
   /** 每种断点下的平台区间（世界坐标），单测与求解器用 */
   geometryByMode: Record<BreakpointId, PlatformInterval[]>;
   intro: string;
   /** 失败提示（照规格 §5.5 公平性合同：原因与几何对应） */
-  failHints: { noSwitch: string; ghostExpired: string; gap: string };
+  failHints: { noSwitch: string; ghostExpired: string; gap: string; cleaner: string };
 }
 
 /** 一块残影平台：来自切换断点前的真实 DOMRect 快照 */
@@ -80,6 +90,17 @@ export interface GhostPlatform {
 export type SimPhase = 'ready' | 'running' | 'paused' | 'won' | 'lost';
 
 /** 引擎事件（main.ts 消费：声画/HUD/场景推进） */
+/** 关卡里的装饰元素（真实网页内容，但不承重——视觉丰度 + 公平教学） */
+export interface DecoDef {
+  id: string;
+  text: string;
+  /** 相对 sim-browser 的 left/top（世界单位） */
+  left: number;
+  top: number;
+  w: number;
+  h: number;
+}
+
 export type SimEvent =
   | { type: 'BREAKPOINT_CROSSED'; from: BreakpointId; to: BreakpointId; reflows: number }
   | { type: 'ECHO_SPAWNED'; gen: number; ttl: number }
@@ -87,4 +108,4 @@ export type SimEvent =
   | { type: 'ECHO_DYING'; gen: number; remain: number }
   | { type: 'LAND'; platformId: string }
   | { type: 'GAME_WON'; elapsed: number; reflows: number }
-  | { type: 'GAME_LOST'; reason: 'no-switch' | 'ghost-expired' | 'gap' };
+  | { type: 'GAME_LOST'; reason: 'no-switch' | 'ghost-expired' | 'gap' | 'cleaner' };
