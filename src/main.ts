@@ -1,503 +1,446 @@
+/**
+ * RE:FLOW 404 · V5「消失的排版能救命」主循环。
+ * 核心机制：拖动虚拟视口宽度 → 真实 CSS @container 重排 → 旧布局残影平台（规格 §5/§15）。
+ * 复用 V4 资产：暖纸外壳、AudioDirector（排版即编曲）、结算演出、留存。
+ */
 import './styles/main.css';
-import { createEngine, type Engine } from './game/engine';
-import { LEVELS, PHYSICS } from './game/levels';
-import { DOMWorldBridge } from './bridge/DOMWorldBridge';
-import { CharacterRenderer } from './effects/CharacterRenderer';
-import { audioDirector, type EditAction } from './ui/AudioDirector';
+import { LEVELS_V5 } from './v5/levels';
+import { StageView } from './v5/StageView';
+import { EchoManager } from './v5/EchoManager';
+import { RunnerSim } from './v5/RunnerSim';
+import { BreakpointWorld } from './v5/BreakpointWorld';
+import type { LevelConfig, SimEvent } from './v5/types';
+import { audioDirector } from './ui/AudioDirector';
 import { loadSave, updateSave } from './utils/storage';
 
-const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
+const loadBest = (): number | null => loadSave().bestEdits;
+const saveBest = (v: number): void => {
+  updateSave({ bestEdits: v });
+};
 
-const world = $('world');
-const viewport = $('viewport');
-const canvas = $('fx') as HTMLCanvasElement;
-const btnLayout = $('btn-layout') as unknown as HTMLButtonElement;
-const btnSound = $('btn-sound') as unknown as HTMLButtonElement;
-const btnVol = $('btn-vol') as unknown as HTMLButtonElement;
+const $ = (id: string): HTMLElement => document.getElementById(id) as HTMLElement;
+
+// ---------- DOM ----------
+const stage = $('v5-stage');
+const slider = $('width-slider') as HTMLInputElement;
+const modeBadge = $('mode-badge');
+const presetRow = $('preset-row');
+const statusTip = $('status-tip');
+const stageTip = $('stage-tip');
+const hudReflows = $('hud-reflows');
+const hudTime = $('hud-time');
+const hudEcho = $('hud-echo');
+const hudStage = $('hud-stage');
+const hudGoal = $('hud-goal');
+const hudEdits = $('hud-edits');
+const hudTimeFooter = $('hud-time-footer');
+const caseLabel = $('case-label');
+const caseCounter = $('case-counter');
+const progressFill = $('progress-fill');
+const ttlNote = $('ttl-note');
+const btnStart = $('btn-start') as HTMLButtonElement;
+const btnHow = $('btn-how') as HTMLButtonElement;
+const btnRetry = $('btn-retry') as HTMLButtonElement;
+const btnPause = $('btn-pause') as HTMLButtonElement;
+const pauseVeil = $('pause-veil');
+const menuHow = $('menu-how');
+const bestLine = $('best-line');
+const bootHint = $('boot-hint');
+const endWrap = $('screen');
+const endTitle = $('end-title');
+const endStats = $('end-stats');
+const endHero = $('end-hero');
+const endCode = $('end-code');
+const btnSkip = $('btn-skip') as HTMLButtonElement;
+const btnRetryAct = $('btn-retry-act') as HTMLButtonElement;
+const btnChallenge = $('btn-challenge') as HTMLButtonElement;
+const btnReplayMotif = $('btn-replay-motif') as HTMLButtonElement;
+const btnShare = $('btn-share') as HTMLButtonElement;
+const btnHome = $('btn-home') as HTMLButtonElement;
+const btnSound = $('btn-sound') as HTMLButtonElement;
 const volPop = $('vol-pop');
 const volMaster = $('vol-master') as HTMLInputElement;
 const volMusic = $('vol-music') as HTMLInputElement;
 const volSfx = $('vol-sfx') as HTMLInputElement;
-const btnPause = $('btn-pause') as unknown as HTMLButtonElement;
-const screenEl = $('screen');
-const endCode = $('end-code');
-const endHero = $('end-hero');
-const endTitle = $('end-title');
-const endStats = $('end-stats');
-const hudStage = $('hud-stage');
-const hudGoal = $('hud-goal');
-const hudTime = $('hud-time');
-const hudEdits = $('hud-edits');
-const progressFill = $('progress-fill');
-const stageTip = $('stage-tip');
-const pauseVeil = $('pause-veil');
-const btnSkip = $('btn-skip') as unknown as HTMLButtonElement;
-const btnChallenge = $('btn-challenge') as unknown as HTMLButtonElement;
-const btnReplayMotif = $('btn-replay-motif') as unknown as HTMLButtonElement;
-const btnShare = $('btn-share') as unknown as HTMLButtonElement;
-const btnHome = $('btn-home') as unknown as HTMLButtonElement;
-const layoutRuler = $('layout-ruler');
 
-const REDUCED = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-const IS_TOUCH = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches;
-if (IS_TOUCH) document.getElementById('app')!.classList.add('touch');
-
-// ---------- 全局状态 ----------
-let engine: Engine = createEngine(0);
-let bridge = new DOMWorldBridge(world, engine, btnLayout, {});
-let renderer = new CharacterRenderer(canvas, engine, REDUCED);
-let actIndex = 0;
-let appMode: 'menu' | 'playing' = 'menu';
+// ---------- 场景状态 ----------
+type Mode = 'menu' | 'playing';
+let appMode: Mode = 'menu';
 let appPaused = false;
-let tipTimer = 0;
-let totalEdits = 0;
-let totalTime = 0;
-let successLock = false;
-let firstRescueDone = false;
+let levelIdx = 0;
+let totalReflows = 0;
 let cineTimers: number[] = [];
 
-const SAVE = loadSave();
+// 当前关的运行时对象
+let level: LevelConfig = LEVELS_V5[0]!;
+let view: StageView | null = null;
+let echo: EchoManager | null = null;
+let sim: RunnerSim | null = null;
+let world: BreakpointWorld | null = null;
+let presetButtons: HTMLButtonElement[] = [];
+let elapsed = 0;
 
-// ---------- 缩放与镜头 ----------
-let scale = 1;
-let camX = 0;
-const isMobileLayout = (): boolean =>
-  viewport.clientWidth / viewport.clientHeight < 1.05 || viewport.clientWidth < 860;
+const fmt = (sec: number): string => `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
 
-function layoutWorld(): void {
-  const vw = viewport.clientWidth;
-  const vh = viewport.clientHeight;
-  if (isMobileLayout()) {
-    scale = Math.min(vh / 620, vw / 460);
-    const visibleW = vw / scale;
-    const target = Math.max(0, Math.min(1200 - visibleW, engine.hero.x - visibleW * 0.38));
-    camX += (target - camX) * 0.08;
-    world.style.transform = `translate(${-camX * scale}px, ${(vh - 620 * scale) / 2}px) scale(${scale})`;
-  } else {
-    scale = Math.min(vw / 1200, vh / 620);
-    const tx = (vw - 1200 * scale) / 2;
-    const ty = (vh - 620 * scale) / 2;
-    world.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
-  }
-}
-
-function showTip(text: string, seconds = 2.4): void {
+// ---------- 提示 ----------
+let tipTimer = 0;
+function tip(text: string, hold = 3.6): void {
+  statusTip.textContent = text;
   stageTip.textContent = text;
   stageTip.classList.add('show');
-  tipTimer = seconds;
+  tipTimer = hold;
 }
 
-// ---------- 桥回调（音效/声部/演出钩子） ----------
-
-interface BridgeCbs {
-  onCue: (id: string) => void;
-  onSnap: (id: string, tag: string) => void;
-  onInvalid: () => void;
-  onRulerFlash: () => void;
-}
-
-function bridgeCallbacks(): BridgeCbs {
-  return {
-    onCue: (id) => audioDirector.cue(id),
-    onSnap: (moduleId, tag) => {
-      let action: EditAction = 'HEADING';
-      if (moduleId === 'GRID') action = 'GRID';
-      else if (tag === 'button') action = 'BUTTON';
-      else if (tag === 'article') action = 'PANEL';
-      audioDirector.onValidEdit(action);
-      if (!firstRescueDone) {
-        firstRescueDone = true;
-        renderer.heroLookBack();
-      }
-    },
-    onInvalid: () => showTip('放这里够不到', 1.4),
-    onRulerFlash: () => {
-      layoutRuler.hidden = false;
-      layoutRuler.classList.remove('flash');
-      void layoutRuler.offsetWidth;
-      layoutRuler.classList.add('flash');
-    },
-  };
-}
-
-// ---------- 场景流 ----------
-
-function startAct(index: number): void {
+// ---------- 关卡装载 ----------
+function loadLevel(index: number): void {
+  // 清掉上一局的演出定时器，防止旧结算/转场覆盖新局（快速重试场景）
   cineTimers.forEach((t) => clearTimeout(t));
   cineTimers = [];
-  actIndex = index;
-  engine = createEngine(index);
-  bridge = new DOMWorldBridge(world, engine, btnLayout, bridgeCallbacks());
-  renderer = new CharacterRenderer(canvas, engine, REDUCED);
-  successLock = false;
-  hudStage.textContent = `STEP 0${index + 1}/0${LEVELS.length}`;
-  hudGoal.textContent = engine.level.goal;
-  progressFill.style.width = `${(index / LEVELS.length) * 100}%`;
-  screenEl.hidden = true;
-  appMode = 'playing';
-  btnPause.hidden = false;
-  audioDirector.resetRun();
-  audioDirector.onRunStart();
-  showTip(`${engine.level.name} — ${engine.level.goal}`, 3.2);
-  if (index === 0 && !firstRescueDone) {
-    cineTimers.push(
-      window.setTimeout(() => {
-        if (!firstRescueDone && appMode === 'playing') {
-          showTip('点一下网页模块（或拖 ≡ 手柄），放到虚线锚点，为它排一条路', 5);
-        }
-      }, 3600),
-    );
+  levelIdx = index;
+  level = LEVELS_V5[index]!;
+  view?.destroy();
+  echo = new EchoManager();
+  sim = new RunnerSim(level);
+  view = new StageView(stage, level);
+  world = new BreakpointWorld({
+    level,
+    echo,
+    readLiveRects: () => view!.livePlatforms(),
+    applyWidth: (px) => view!.setSimWidth(px),
+    worldTime: () => sim!.time,
+    onCross: (from, to) => onBreakpointCrossed(from, to),
+  });
+  // HUD
+  caseLabel.textContent = level.subtitle;
+  caseCounter.textContent = `0${index + 1} / 0${LEVELS_V5.length}`;
+  hudStage.textContent = `CASE 0${index + 1}/0${LEVELS_V5.length}`;
+  hudGoal.textContent = level.id === 'L1' ? '跨过 690px，让旧桥留下残影' : '电脑→平板→手机，两代旧桥接力';
+  ttlNote.textContent = String(level.ghostTtl);
+  progressFill.style.width = `${(index / LEVELS_V5.length) * 100}%`;
+  // 预设按钮（≥44px 触控）
+  presetRow.querySelectorAll('.preset-btn').forEach((b) => b.remove());
+  presetButtons = level.presets.map((p) => {
+    const b = document.createElement('button');
+    b.className = 'preset-btn mono';
+    b.textContent = p.label;
+    b.dataset.mode = p.mode;
+    b.setAttribute('aria-pressed', String(p.mode === 'wide'));
+    b.addEventListener('click', () => {
+      audioDirector.unlock();
+      applyWidth(p.width);
+    });
+    presetRow.insertBefore(b, presetRow.querySelector('.spacer') ?? btnRetry);
+    return b;
+  });
+  // 确保有一个 spacer（flex:1 占位）
+  if (!presetRow.querySelector('.spacer')) {
+    const sp = document.createElement('span');
+    sp.style.flex = '1';
+    sp.className = 'spacer';
+    presetRow.insertBefore(sp, btnRetry);
+  }
+  slider.value = String(level.sim.width);
+  elapsed = 0;
+  refreshHud();
+  renderFrame();
+}
+
+const MODE_NAME: Record<string, string> = { wide: 'DESKTOP', medium: 'TABLET', compact: 'MOBILE' };
+
+function applyWidth(px: number): void {
+  if (!world) return;
+  const commit = world.commit(px, appMode === 'playing' && !appPaused);
+  slider.value = String(commit.width);
+  modeBadge.textContent = `${MODE_NAME[commit.mode]} / ${commit.width}PX`;
+  for (const b of presetButtons) {
+    b.setAttribute('aria-pressed', String(b.dataset.mode === commit.mode));
   }
 }
 
-function retryAct(): void {
-  audioDirector.onRetry();
-  startAct(actIndex);
+function onBreakpointCrossed(from: string, to: string): void {
+  sim?.noteReflow();
+  sim?.noteGhost();
+  // 排版即编曲：每次合法重排解锁一个声部（V4 AudioDirector 复用）
+  const action = to === 'compact' ? 'BUTTON' : 'HEADING';
+  audioDirector.onValidEdit(action);
+  tip(`断点跨越 ${from} → ${to} · 旧排版留下残影 ${level.ghostTtl}s`, 3.0);
+  refreshHud();
 }
 
-function fmt(t: number): string {
-  const m = Math.floor(t / 60);
-  const s = Math.floor(t % 60);
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+// ---------- 主循环（固定步长，规格 §16.1） ----------
+const STEP = 1 / 60;
+let accumulator = 0;
+let prev = performance.now();
+
+function frame(now: number): void {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, Math.max(0, (now - prev) / 1000));
+  prev = now;
+  if (appMode === 'playing' && !appPaused && sim && !sim.done) {
+    accumulator += dt;
+    let steps = 0;
+    while (accumulator >= STEP && steps < 8) {
+      accumulator -= STEP;
+      steps++;
+      echo!.tick(sim.time);
+      sim.tick(STEP, {
+        platforms: view!.platformIntervals(),
+        ghosts: echo!.active(sim.time),
+      });
+      if (sim.done) break;
+    }
+    consumeSimEvents();
+    elapsed = sim.time;
+    // 清理线危险度（复用 V4 danger 声部）
+    const cleanerX = Math.max(0, sim.hero.x - 375);
+    audioDirector.setDanger(sim.hero.x - cleanerX < 200, dt);
+  }
+  if (tipTimer > 0) {
+    tipTimer -= dt;
+    if (tipTimer <= 0) stageTip.classList.remove('show');
+  }
+  renderFrame();
+  refreshHud();
 }
 
-function voicesSummary(): string {
-  const v = audioDirector.voices;
-  const parts: string[] = [];
-  if (v.bassPluck) parts.push('低音拨弦');
-  if (v.bellMotif) parts.push('钟琴动机');
-  if (v.paperPerc) parts.push('纸页打击');
-  if (v.openHarmony) parts.push('开阔和声');
-  return parts.length > 0 ? parts.join(' + ') : '基础氛围';
+function renderFrame(): void {
+  if (!view || !sim) return;
+  const running = appMode === 'playing' && !appPaused && !sim.done;
+  view.renderHero(sim.hero.x, sim.hero.fallSink, running);
+  view.updateCamera(sim.hero.x, running);
+  view.renderGhosts(echo ? echo.active(sim.time) : [], sim.time);
 }
 
-// ---------- 结算演出（规格 §V4.7 S3：可跳过） ----------
+function refreshHud(): void {
+  const reflows = world ? world.reflowCount : 0;
+  hudReflows.innerHTML = `REFLOWS <b>${reflows}</b>`;
+  hudEdits.textContent = `REFLOWS ${String(reflows).padStart(2, '0')}`;
+  hudTime.textContent = `${elapsed.toFixed(1)}s`;
+  hudTimeFooter.textContent = fmt(elapsed);
+  const ghosts = echo ? echo.active(sim ? sim.time : 0) : [];
+  if (ghosts.length) {
+    const minRemain = Math.min(...ghosts.map((g) => g.deadline - (sim?.time ?? 0)));
+    hudEcho.textContent = `ECHO ${Math.max(0, minRemain).toFixed(1)}s`;
+  } else {
+    hudEcho.textContent = 'ECHO —';
+  }
+}
 
-function applyEndVisible(): void {
-  endCode.innerHTML =
-    '<span class="digit">2</span><span class="digit">0</span><span class="digit">0</span><span class="digit accent">&nbsp;OK</span>';
-  endCode.className = 'end-code ok';
-  endTitle.textContent = '页面保住了——它也被保住了';
-  endHero.classList.add('show');
-  endStats.innerHTML = `
-    <span class="stat-line show">SURVIVED · 生还</span>
-    <span class="stat-line show">EDITS ${String(totalEdits).padStart(2, '0')} 次编辑 · ${fmt(totalTime)}</span>
-    <span class="stat-line show">你排的乐句：${voicesSummary()} · ${audioDirector.motifSummary}</span>`;
-  btnChallenge.hidden = false;
-  btnChallenge.textContent = `挑战更少编辑（3 次可解 · 你用了 ${totalEdits} 次）`;
-  btnReplayMotif.hidden = false;
-  btnShare.hidden = false;
-  btnHome.hidden = false;
-  screenEl.querySelectorAll('.cta').forEach((b) => b.classList.add('show'));
-  btnSkip.classList.remove('show');
+function consumeSimEvents(): void {
+  const events: SimEvent[] = [...(sim ? sim.drainEvents() : []), ...(echo ? echo.drainEvents() : [])];
+  for (const ev of events) {
+    switch (ev.type) {
+      case 'GAME_WON':
+        onLevelWon();
+        break;
+      case 'GAME_LOST':
+        onLevelLost(ev.reason);
+        break;
+      case 'ECHO_EXPIRED':
+        audioDirector.cue('echo.expire');
+        break;
+      case 'ECHO_DYING':
+        audioDirector.cue('echo.dying');
+        break;
+      case 'LAND':
+        if (ev.platformId.startsWith('ghost:')) audioDirector.cue('echo.land');
+        break;
+      default:
+        break;
+    }
+  }
+}
+
+// ---------- 胜负与场景推进 ----------
+function onLevelWon(): void {
+  const reflows = world?.reflowCount ?? 0;
+  totalReflows += reflows;
+  audioDirector.playRescuePhrase();
+  if (levelIdx === 0) {
+    // CASE 01 → 02 过场（轻量，不打断节奏）
+    tip('CASE 01 · 200 OK → 前往第二幕：一段路，两份过去', 2.4);
+    cineTimers.push(window.setTimeout(() => loadLevel(1), 1500));
+  } else {
+    progressFill.style.width = '100%';
+    cineTimers.push(window.setTimeout(() => showEnd('VICTORY'), 600));
+  }
+}
+
+function onLevelLost(reason: 'no-switch' | 'ghost-expired' | 'gap'): void {
+  audioDirector.onFail();
+  cineTimers.push(window.setTimeout(() => showEnd('FAIL', reason), 500));
 }
 
 function showEnd(kind: 'VICTORY' | 'FAIL', reason?: string): void {
   cineTimers.forEach((t) => clearTimeout(t));
   cineTimers = [];
-  const t = engine.gameTime();
-  const edits = engine.edits();
-  const cine = (fn: () => void, ms: number): void => {
-    cineTimers.push(window.setTimeout(fn, ms));
-  };
-
-  screenEl.hidden = false;
   appMode = 'menu';
   btnPause.hidden = true;
-
-  if (kind === 'FAIL') {
-    totalEdits += edits;
-    totalTime += t;
-    endCode.innerHTML = '<span class="digit">404</span>';
-    endCode.className = 'end-code bad';
-    endHero.classList.remove('show');
-    endTitle.textContent = reason === 'caught' ? '清理波追上了它' : '它掉进了断裂的排版';
-    endStats.innerHTML = `<span class="stat-line show">FAIL · ${
-      reason === 'caught' ? 'THE CLEANER CAUGHT IT' : 'BROKEN LAYOUT'
-    } · EDITS ${String(edits).padStart(2, '0')} · ${fmt(t)}</span>`;
-    $('btn-retry').textContent = '从这一幕重试 →';
+  endWrap.hidden = false;
+  endHero.classList.remove('show');
+  if (kind === 'VICTORY') {
+    const best = loadBest();
+    if (best === null || totalReflows < best) saveBest(totalReflows);
+    const bestNow = loadBest();
+    bestLine.textContent = bestNow !== null ? `BEST · ${bestNow} RE:FLOW${bestNow === 1 ? '' : 'S'}` : '';
+    endTitle.innerHTML = '你让消失的<br/>东西留下来了。';
+    endStats.innerHTML = `
+      <span class="stat-line show">200 OK · RESCUED WITH ${totalReflows} RE:FLOW${totalReflows === 1 ? '' : 'S'}</span>
+      <span class="stat-line show">两代排版接力 · 用网页的过去救出了 404</span>`;
+    btnRetryAct.textContent = '再救一次 ↗';
+    btnChallenge.hidden = false;
+    btnChallenge.textContent = `挑战更少切换（当前 ${totalReflows}）`;
+    btnReplayMotif.hidden = false;
+    // 404 → 200 OK 字形分离（V4 演出复用）
+    cineTimers.push(window.setTimeout(() => endCode.classList.add('ok'), 300));
+    cineTimers.push(window.setTimeout(() => endHero.classList.add('show'), 900));
+    audioDirector.playRescuePhrase();
+  } else {
+    const key = reason ?? 'gap';
+    const hint = level.failHints[key as keyof typeof level.failHints];
+    endTitle.innerHTML = '页面<br/>把你漏掉了。';
+    endStats.innerHTML = `<span class="stat-line show">404 · LAYOUT LOST</span><span class="stat-line show">${hint}</span>`;
+    btnRetryAct.textContent = '从这一幕重试 →';
     btnChallenge.hidden = true;
     btnReplayMotif.hidden = true;
-    btnShare.hidden = true;
-    btnHome.hidden = false;
-    screenEl.querySelectorAll('.cta').forEach((b) => b.classList.add('show'));
-    btnSkip.classList.remove('show');
-    audioDirector.onFail();
-  } else {
-    totalEdits += edits;
-    totalTime += t;
-    if (!SAVE.bestEdits || totalEdits < SAVE.bestEdits) {
-      updateSave({ bestEdits: totalEdits, bestTime: Math.round(totalTime * 10) / 10 });
-      SAVE.bestEdits = totalEdits;
-    }
-    endCode.innerHTML = '<span class="digit">4</span><span class="digit">0</span><span class="digit">4</span>';
-    endCode.className = 'end-code bad';
-    endHero.classList.remove('show');
-    endTitle.textContent = '';
-    endStats.innerHTML = '';
-    screenEl.querySelectorAll('.cta').forEach((b) => b.classList.remove('show'));
-    cine(() => btnSkip.classList.add('show'), 400);
-    cine(() => {
-      endCode.querySelectorAll('.digit').forEach((d, i) => {
-        const el = d as HTMLElement;
-        el.style.transform = `translateY(${i === 1 ? -14 : 8}px) rotate(${(i - 1) * 4}deg)`;
-        el.style.opacity = '0.25';
-      });
-    }, 600);
-    cine(() => {
-      endCode.innerHTML =
-        '<span class="digit">2</span><span class="digit">0</span><span class="digit">0</span><span class="digit accent">&nbsp;OK</span>';
-      endCode.className = 'end-code ok';
-      endTitle.textContent = '页面保住了——它也被保住了';
-    }, 1100);
-    cine(() => {
-      endHero.classList.add('show');
-      audioDirector.cue('character.win');
-    }, 1600);
-    cine(() => {
-      endStats.innerHTML = `
-        <span class="stat-line">SURVIVED · 生还</span>
-        <span class="stat-line">EDITS ${String(totalEdits).padStart(2, '0')} 次编辑 · ${fmt(totalTime)}</span>
-        <span class="stat-line">你排的乐句：${voicesSummary()} · ${audioDirector.motifSummary}</span>`;
-      endStats.querySelectorAll('.stat-line').forEach((l, i) => {
-        cineTimers.push(window.setTimeout(() => l.classList.add('show'), 150 + i * 260));
-      });
-    }, 2600);
-    cine(() => {
-      $('btn-retry').textContent = '再改写一次 →';
-      btnChallenge.hidden = false;
-      btnChallenge.textContent = `挑战更少编辑（3 次可解 · 你用了 ${totalEdits} 次）`;
-      btnReplayMotif.hidden = false;
-      btnShare.hidden = false;
-      btnHome.hidden = false;
-      screenEl.querySelectorAll('.cta').forEach((b, i) => {
-        cineTimers.push(window.setTimeout(() => b.classList.add('show'), 120 + i * 130));
-      });
-      btnSkip.classList.remove('show');
-    }, 3200);
-    $('best-line').textContent = SAVE.bestEdits
-      ? `BEST ${String(SAVE.bestEdits).padStart(2, '0')} EDITS`
-      : '';
   }
+  btnShare.hidden = false;
+  btnHome.hidden = false;
+  btnSkip.hidden = true;
 }
 
-btnSkip.addEventListener('click', () => {
-  cineTimers.forEach((t2) => clearTimeout(t2));
+// ---------- 控制 ----------
+btnStart.addEventListener('click', () => {
+  audioDirector.unlock();
+  startRun();
+});
+btnHow.addEventListener('click', () => {
+  menuHow.hidden = !menuHow.hidden;
+});
+btnRetry.addEventListener('click', () => {
+  cineTimers.forEach((t) => clearTimeout(t));
   cineTimers = [];
-  applyEndVisible();
+  loadLevel(levelIdx);
+  startRun();
 });
-
-// ---------- 引擎事件 → 表现 ----------
-
-function consumeEvents(): void {
-  for (const ev of engine.drainEvents()) {
-    switch (ev.type) {
-      case 'HERO_LAND':
-        audioDirector.cue('character.land');
-        renderer.spawnBurst(engine.hero.x, engine.hero.feetY, 5, 'rgba(212,208,198,0.8)', true);
-        break;
-      case 'HERO_JUMP':
-        audioDirector.cue('character.jump');
-        break;
-      case 'HERO_BOUNCE':
-        audioDirector.cue('character.bounce');
-        renderer.spawnBurst(engine.hero.x, engine.hero.feetY, 8, '#D9FF48', true);
-        break;
-      case 'CLEANER_NEAR':
-        audioDirector.cue('character.near_miss');
-        showTip('⚠ 清理波逼近 — 危险', 1.6);
-        break;
-      case 'ERASE_MODULE':
-        audioDirector.cue('module.erase');
-        break;
-      case 'LEVEL_SUCCESS':
-        if (successLock) break;
-        successLock = true;
-        totalEdits += engine.edits();
-        totalTime += engine.gameTime();
-        showTip(`ACT ${engine.level.act} CLEAR · ${engine.edits()} EDITS`, 2.0);
-        cineTimers.push(window.setTimeout(() => startAct(actIndex + 1), 1900));
-        break;
-      case 'VICTORY':
-        if (successLock) break;
-        successLock = true;
-        cineTimers.push(window.setTimeout(() => showEnd('VICTORY'), 800));
-        break;
-      case 'LEVEL_FAIL':
-        cineTimers.push(window.setTimeout(() => showEnd('FAIL', ev.data?.reason as string), 700));
-        break;
-    }
-  }
-}
-
-// ---------- 主循环 ----------
-
-let accumulator = 0;
-let prev = performance.now();
-
-function frame(now: number): void {
-  const delta = Math.min((now - prev) / 1000, PHYSICS.maxFrameDt);
-  prev = now;
-
-  if (appMode === 'playing' && !appPaused) {
-    bridge.measurePass();
-    accumulator += delta;
-    let steps = 0;
-    while (accumulator >= PHYSICS.fixedStep && steps < 8) {
-      engine.tick(PHYSICS.fixedStep * engine.timeScale());
-      accumulator -= PHYSICS.fixedStep;
-      steps++;
-      const ph = engine.phase();
-      if (ph !== 'RUNNING' && ph !== 'DRAGGING') break;
-    }
-    consumeEvents();
-    bridge.renderPass();
-
-    hudTime.textContent = fmt(engine.gameTime());
-    hudEdits.textContent = `EDITS ${String(engine.edits()).padStart(2, '0')}`;
-
-    const cx = engine.cleanerX();
-    audioDirector.setDanger(cx > -60 && engine.hero.x - cx < 240, delta);
-  }
-
-  if (tipTimer > 0) {
-    tipTimer -= delta;
-    if (tipTimer <= 0) stageTip.classList.remove('show');
-  }
-
-  layoutWorld();
-  renderer.render(delta, appMode === 'menu');
-
-  requestAnimationFrame(frame);
-}
-
-// ---------- 输入 ----------
-
-$('btn-start').addEventListener('click', () => {
-  audioDirector.unlock();
-  audioDirector.cue('ui.click');
-  totalEdits = 0;
-  totalTime = 0;
-  firstRescueDone = false;
-  startAct(0);
-});
-$('btn-how').addEventListener('click', () => {
-  audioDirector.unlock();
-  audioDirector.cue('ui.click');
-  $('menu-how').hidden = !$('menu-how').hidden;
-});
-$('btn-retry').addEventListener('click', () => {
-  audioDirector.unlock();
-  audioDirector.cue('ui.click');
-  if ((endCode.textContent ?? '').includes('200')) {
-    totalEdits = 0;
-    totalTime = 0;
-    firstRescueDone = false;
-    startAct(0);
-  } else {
-    retryAct();
-  }
+btnRetryAct.addEventListener('click', () => {
+  endWrap.hidden = true;
+  totalReflows = levelIdx === 0 ? 0 : totalReflows;
+  loadLevel(levelIdx);
+  startRun();
 });
 btnChallenge.addEventListener('click', () => {
-  audioDirector.cue('ui.click');
-  totalEdits = 0;
-  totalTime = 0;
-  firstRescueDone = false;
-  startAct(0);
-  showTip('挑战：三幕各只需 1 次编辑（共 3 次）就能救出它', 4);
-});
-btnReplayMotif.addEventListener('click', () => {
-  audioDirector.cue('ui.click');
-  audioDirector.replayMotif();
-});
-btnShare.addEventListener('click', async () => {
-  audioDirector.cue('ui.click');
-  const text = `我用 ${totalEdits} 次改动把一个 404 小家伙救成了 200 OK（${fmt(totalTime)}）。我的页面旋律是 ${audioDirector.motifSummary}。你能只用 3 次吗？——RE:FLOW 404《别把我排版掉》`;
-  try {
-    if (navigator.share) {
-      await navigator.share({ title: 'RE:FLOW 404', text });
-    } else {
-      await navigator.clipboard.writeText(text);
-      showTip('战绩已复制到剪贴板', 2);
-    }
-  } catch {
-    showTip('分享未完成，可截图保存', 2);
-  }
+  endWrap.hidden = true;
+  totalReflows = 0;
+  loadLevel(0);
+  startRun();
 });
 btnHome.addEventListener('click', () => {
-  audioDirector.cue('ui.click');
-  appMode = 'menu';
-  engine = createEngine(0);
-  bridge = new DOMWorldBridge(world, engine, btnLayout, bridgeCallbacks());
-  renderer = new CharacterRenderer(canvas, engine, REDUCED);
-  screenEl.hidden = true;
-  btnPause.hidden = true;
+  endWrap.hidden = true;
+  loadLevel(0);
+  setPaused(false);
 });
-
-btnSound.addEventListener('click', () => {
-  audioDirector.unlock();
-  const next = !audioDirector.isEnabled;
-  audioDirector.setEnabled(next);
-  btnSound.textContent = next ? '♪ 声音已开启' : '♪ 开启声音';
-  btnSound.setAttribute('aria-pressed', String(next));
-  updateSave({ soundOn: next });
-  if (next) {
-    audioDirector.cue('ui.click');
-    if (appMode === 'playing') audioDirector.onRunStart();
+btnReplayMotif.addEventListener('click', () => audioDirector.replayMotif());
+btnShare.addEventListener('click', async () => {
+  const txt = `我在《RE:FLOW 404》用 ${totalReflows} 次响应式切换，让一段消失的排版救下 404。你能只用 2 次吗？`;
+  try {
+    await navigator.clipboard.writeText(txt);
+    btnShare.textContent = '已复制 ✓';
+    window.setTimeout(() => (btnShare.textContent = '分享战绩'), 1600);
+  } catch {
+    btnShare.textContent = '浏览器限制复制';
   }
 });
-btnVol.addEventListener('click', () => {
-  volPop.hidden = !volPop.hidden;
+btnSkip.addEventListener('click', () => {
+  cineTimers.forEach((t) => clearTimeout(t));
+  cineTimers = [];
 });
-volMaster.addEventListener('input', () =>
-  audioDirector.setVolume('master', volMaster.valueAsNumber / 100),
-);
-volMusic.addEventListener('input', () => audioDirector.setVolume('bgm', volMusic.valueAsNumber / 100));
-volSfx.addEventListener('input', () => audioDirector.setVolume('sfx', volSfx.valueAsNumber / 100));
-
-function setPaused(v: boolean): void {
-  if (appMode !== 'playing') return;
-  appPaused = v;
-  pauseVeil.hidden = !v;
-  if (v) audioDirector.suspend();
-  else audioDirector.resume();
-}
-btnPause.addEventListener('click', () => {
-  audioDirector.cue('ui.click');
-  setPaused(!appPaused);
+slider.addEventListener('input', () => {
+  audioDirector.unlock();
+  applyWidth(Number(slider.value));
 });
-pauseVeil.addEventListener('click', () => setPaused(false));
-
 window.addEventListener('keydown', (e) => {
   if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const typing = document.activeElement instanceof HTMLInputElement && document.activeElement.type === 'text';
   if (e.key === ' ') {
     e.preventDefault();
-    setPaused(!appPaused);
-  } else if (e.key === 'r' || e.key === 'R') {
-    if (appMode === 'playing') retryAct();
+    if (appMode === 'playing') setPaused(!appPaused);
+  } else if ((e.key === 'r' || e.key === 'R') && !typing) {
+    if (appMode === 'playing') {
+      loadLevel(levelIdx);
+      startRun();
+    }
   } else if (e.key === 'm' || e.key === 'M') {
     btnSound.click();
   } else if (e.key === 'Escape') {
     if (appPaused) setPaused(false);
     else if (!volPop.hidden) volPop.hidden = true;
-  } else if (e.key === 'Enter' && !screenEl.hidden) {
-    ($('btn-retry') as HTMLButtonElement).click();
+  } else if (e.key === 'Enter' && !endWrap.hidden) {
+    btnRetryAct.click();
   }
 });
 
-// nvp=1：无头浏览器/自动化截图用——页面 hidden 时不自动暂停（正式行为不变）
+function startRun(): void {
+  cineTimers.forEach((t) => clearTimeout(t));
+  cineTimers = [];
+  endWrap.hidden = true;
+  appMode = 'playing';
+  setPaused(false);
+  btnPause.hidden = false;
+  audioDirector.resetRun();
+  audioDirector.onRunStart();
+  tip(level.id === 'L1' ? '现在！把宽度切到手机布局，让旧桥留在原地。' : '电脑→平板→手机，两代旧桥接力。', 4.5);
+}
+
+function setPaused(v: boolean): void {
+  if (appMode !== 'playing') {
+    pauseVeil.hidden = true;
+    return;
+  }
+  appPaused = v;
+  pauseVeil.hidden = !v;
+  btnPause.textContent = v ? '▶ 继续' : '‖ 暂停';
+  if (v) audioDirector.suspend();
+  else {
+    audioDirector.resume();
+    prev = performance.now();
+  }
+}
+btnPause.addEventListener('click', () => setPaused(!appPaused));
+pauseVeil.addEventListener('click', () => setPaused(false));
+
+// 声音/音量（V4 复用）
+btnSound.addEventListener('click', () => {
+  const on = btnSound.getAttribute('aria-pressed') !== 'true';
+  btnSound.setAttribute('aria-pressed', String(on));
+  btnSound.textContent = on ? '♫ 声音已开启' : '♪ 开启声音';
+  audioDirector.unlock();
+  audioDirector.setEnabled(on);
+});
+volPop.hidden = true;
+btnSound.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  volPop.hidden = !volPop.hidden;
+});
+volMaster.addEventListener('input', () => audioDirector.setVolume('master', volMaster.valueAsNumber / 100));
+volMusic.addEventListener('input', () => audioDirector.setVolume('bgm', volMusic.valueAsNumber / 100));
+volSfx.addEventListener('input', () => audioDirector.setVolume('sfx', volSfx.valueAsNumber / 100));
+
+// 失焦/隐藏暂停（nvp=1 供无头截图）
 const NO_AUTO_PAUSE = new URLSearchParams(location.search).get('nvp') === '1';
 document.addEventListener('visibilitychange', () => {
   if (!NO_AUTO_PAUSE && document.hidden && appMode === 'playing') setPaused(true);
   prev = performance.now();
 });
-window.addEventListener('resize', layoutWorld);
+window.addEventListener('resize', () => view?.fit());
 
 // 首屏
-layoutWorld();
+const best = loadBest();
+bestLine.textContent = best !== null ? `BEST · ${best} RE:FLOW${best === 1 ? '' : 'S'}` : '';
+loadLevel(0);
+requestAnimationFrame(frame);
 
-// boot
-const bootHint = $('boot-hint');
+// boot hint
 let settled = false;
 const settle = (): void => {
   if (settled) return;
@@ -516,16 +459,19 @@ window.addEventListener('error', () => {
 const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
 if (import.meta.env.DEV || DEBUG) {
   (window as unknown as Record<string, unknown>).__game = {
-    engine: () => engine,
-    bridge: () => bridge,
-    audio: () => audioDirector,
-    start: (act: number) => startAct(act),
+    level: () => level,
+    view: () => view,
+    sim: () => sim,
+    echo: () => echo,
+    world: () => world,
+    applyWidth: (px: number) => applyWidth(px),
+    start: () => startRun(),
+    loadLevel: (i: number) => loadLevel(i),
     mode: () => appMode,
     paused: () => appPaused,
     resume: () => setPaused(false),
-    tick: () => frame(performance.now()),
-    tickAt: (ms: number) => frame(ms),
+    phase: () => (sim ? (sim.done ? (sim.hero.x >= level.hero.goalX ? 'won' : 'lost') : 'running') : 'ready'),
+    heroX: () => sim?.hero.x ?? 0,
+    time: () => sim?.time ?? 0,
   };
 }
-
-requestAnimationFrame(frame);

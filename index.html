@@ -1,59 +1,51 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
   <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
-    />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
     <meta name="theme-color" content="#EEEAE1" />
+    <title>RE:FLOW 404 · 消失的排版能救命</title>
     <meta
       name="description"
-      content="RE:FLOW 404《别把我排版掉》：整张网页就是逃生地图。拖动真正的标题、按钮和卡片改变排版，救出一个即将被删除的 404 小生命——你的每次编辑，都会成为它的救援乐句。"
+      content="真正的网页排版，就是你能踩踏的世界。拖动视口宽度，让消失的旧布局留下可踩的残影，救出一个即将被删除的 404 小生命。"
     />
-    <title>RE:FLOW 404 · 别把我排版掉</title>
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23EEEAE1'/%3E%3Cpath d='M6 24V8h13l-4 5h9v11z' fill='%23141615'/%3E%3Ccircle cx='12' cy='15' r='1.8' fill='%23EEEAE1'/%3E%3Ccircle cx='18' cy='14' r='1.8' fill='%23EEEAE1'/%3E%3Crect x='9' y='24' width='3' height='4' fill='%23EE5337'/%3E%3Crect x='15' y='24' width='3' height='4' fill='%23EE5337'/%3E%3C/svg%3E"
-    />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230C0E10'/%3E%3Ctext x='16' y='22' font-size='14' font-weight='900' text-anchor='middle' fill='%23EE5337'%3E404%3C/text%3E%3C/svg%3E" />
   </head>
   <body>
-    <div id="app" data-testid="app">
-      <!-- ===== 暖纸杂志外壳 ===== -->
+    <div id="app">
       <header id="shell-header">
-        <div class="brand mono">RE:FLOW<b class="brand-404">404</b></div>
-        <div class="shell-mid mono">SYSTEM&nbsp;/&nbsp;HUMAN&nbsp;RESCUE</div>
-        <div class="shell-right">
-          <button class="shell-btn mono" id="btn-sound" data-testid="btn-sound" aria-pressed="false">
-            ♪ 开启声音
-          </button>
-          <button class="shell-btn mono" id="btn-vol" aria-label="音量">VOL</button>
-          <button class="shell-btn mono" id="btn-pause" data-testid="btn-pause" hidden>‖</button>
+        <div class="brand">
+          <span class="brand-mark mono">RE:FLOW</span>
+          <span class="brand-404">404</span>
+        </div>
+        <span class="shell-mid mono">REAL CSS · LIVE REFLOW · TEMPORARY MEMORY</span>
+        <div class="header-actions">
+          <button id="btn-sound" class="chip mono" data-testid="btn-sound">♪ 开启声音</button>
+          <button id="btn-pause" class="chip mono" data-testid="btn-pause" hidden>‖ 暂停</button>
         </div>
       </header>
 
       <div id="shell-body">
-        <!-- 左：品牌海报栏（首屏即操作入口，0 帧等待） -->
-        <aside id="brand-col" data-testid="brand-col">
-          <div class="poster-tag mono">THIS PAGE&nbsp;IS&nbsp;ALIVE.</div>
+        <!-- 左：品牌海报栏 -->
+        <aside id="brand-col">
+          <div class="poster-kicker mono">THE PAGE REMEMBERS.</div>
           <h1 class="poster-title">
-            一次轻轻的修改，<br />
-            可以救下<br />
-            <span class="poster-404">4<span class="misreg">0</span>4</span>
+            消失<br />的排版<br />
+            <span class="poster-404">能<span class="misreg">救</span>命</span>
           </h1>
           <p class="poster-sub">
-            它从错误日志里醒来，即将被系统删除。<br />
-            你是排版管理员：<b>拖动真正的网页标题、按钮、卡片</b>，为它排出一条生路。你的每次编辑，都会成为它的救援乐句。
+            一个小生命正被网页删除。<b>拖动网页宽度，让旧布局留下能踩踏的残影。</b><br />
+            这一刻，响应式设计就是时间魔法：系统说找不到，不等于存在没有意义。
           </p>
           <div class="poster-actions">
-            <button class="cta" id="btn-start" data-testid="btn-start">开始拯救&nbsp;↗</button>
+            <button class="cta" id="btn-start" data-testid="btn-start">开始逃生&nbsp;↗</button>
             <button class="cta ghost" id="btn-how">怎么救？</button>
           </div>
           <div class="poster-how mono" id="menu-how" hidden>
-            ① 点网页模块（或拖右上 ≡ 手柄）<br />
-            ② 选/拖到虚线锚点 · 拖动时世界 0.22× 慢放<br />
-            ③ 它自动向右跑 · 白色清理波在追<br />
-            ④ 开启声音：每次成功编辑，音乐加一声部<br />
+            ① 点「开始逃生」，零四自动向右跑<br />
+            ② 跨过断点（690px / 700px / 520px），真实 CSS 会重排<br />
+            ③ 旧排版留下只有几秒的蓝色残影——踩着「过去」走完「现在」<br />
+            ④ 第二关需要两代旧布局接力：电脑 → 平板 → 手机<br />
             <span class="kbd">SPACE</span> 暂停 · <span class="kbd">R</span> 重试 · <span class="kbd">M</span> 静音
           </div>
           <div class="poster-foot mono">
@@ -62,81 +54,93 @@
           </div>
         </aside>
 
-        <!-- 右：深墨交互舞台 -->
+        <!-- 右：V5 舞台 -->
         <main id="stage-wrap" data-testid="stage">
-          <div id="viewport">
-            <div id="world" data-testid="world">
-              <!-- 关卡内容由 DOMWorldBridge 注入（真实 h1/button/article） -->
-              <canvas id="fx" width="1200" height="620" data-testid="fx"></canvas>
+          <div class="board-head mono">
+            <span><span class="live-dot">●</span> <span id="case-label">CASE 01 · THE MISSING BRIDGE</span></span>
+            <span id="case-counter">01 / 02</span>
+          </div>
+          <div id="v5-stage" data-testid="v5-stage" aria-label="虚拟网页逃生地图">
+            <div id="v5-world" data-testid="v5-world">
+              <!-- 关卡 DOM（sim-browser + 真实网页元素）由 StageView 注入 -->
+            </div>
+          </div>
+          <div class="statusbar mono">
+            <span id="status-tip" data-testid="status-tip">先点击「开始逃生」，再切换网页宽度</span>
+            <span class="stat"><span id="hud-reflows">REFLOWS <b>0</b></span><span id="hud-time">00.0s</span></span>
+          </div>
+          <div id="v5-control" data-testid="v5-control">
+            <div class="control-head">
+              <h2>把网页拉窄，保留旧版的桥。</h2>
+              <span class="capsule mono" id="mode-badge">DESKTOP / 840PX</span>
+            </div>
+            <p class="control-note">拖动滑块，或直接点布局预设。宽度跨过断点时，真实 CSS 会重排，旧布局以残影保留 <b id="ttl-note">4.4</b> 秒。</p>
+            <div class="meter">
+              <span class="sidetag mono">480px</span>
+              <input id="width-slider" type="range" min="480" max="840" step="10" value="840" aria-label="改变网页宽度" />
+              <span class="sidetag mono">840px</span>
+            </div>
+            <div class="presets" id="preset-row">
+              <!-- 预设按钮由 main.ts 按关卡注入 -->
+              <span style="flex: 1"></span>
+              <button id="btn-retry" class="retry mono">↺ 重置</button>
             </div>
           </div>
           <div id="stage-tip" class="mono" data-testid="stage-tip"></div>
-          <div id="drag-pill" class="mono" hidden>EDITING · 0.22×</div>
-          <div id="layout-ruler" class="mono" data-testid="layout-ruler" hidden>LAYOUT / REVISED</div>
+          <div id="pause-veil" hidden>
+            <div class="pause-card">
+              <div class="pause-title">PAUSED</div>
+              <p>追兵已冻结 · 点击画面或按 SPACE 继续</p>
+            </div>
+          </div>
         </main>
       </div>
 
       <footer id="shell-footer">
-        <span class="mono" id="hud-stage" data-testid="hud-stage">STEP 01/03</span>
+        <span class="mono" id="hud-stage" data-testid="hud-stage">CASE 01/02</span>
         <div class="progress-line"><div id="progress-fill"></div></div>
-        <span class="mono" id="hud-goal" data-testid="hud-goal">拖动页面，改变命运</span>
+        <span class="mono" id="hud-goal" data-testid="hud-goal">拖动网页宽度，改变地形</span>
         <span class="mono hud-right">
-          <span id="hud-edits" data-testid="hud-edits">EDITS 00</span>
-          <span id="hud-time" data-testid="hud-time">00:00</span>
-          <button class="shell-btn mono" id="btn-layout" data-testid="btn-layout" hidden>
-            LAYOUT·GALLERY
-          </button>
+          <span id="hud-echo" data-testid="hud-echo">ECHO —</span>
+          <span id="hud-edits" data-testid="hud-edits">REFLOWS 00</span>
+          <span id="hud-time-footer" data-testid="hud-time-footer">00:00</span>
         </span>
       </footer>
 
+      <!-- 结算演出层（V4 遗产复用） -->
+      <div id="screen" hidden>
+        <div class="scr-end">
+          <div class="cine-stage">
+            <div class="end-code" id="end-code" aria-live="polite">
+              <span class="digit d1">4</span><span class="digit d2">0</span><span class="digit d3">4</span>
+              <span class="arrow">→</span>
+              <span class="digit ok a">2</span><span class="digit ok b">0</span><span class="digit ok c">0</span>
+              <span class="ok-word">OK</span>
+            </div>
+            <div class="end-hero" id="end-hero"></div>
+          </div>
+          <h2 class="end-title" id="end-title">你让消失的<br />东西留下来了。</h2>
+          <div class="end-stats" id="end-stats"></div>
+          <div class="end-actions" id="end-actions">
+            <button class="cta" id="btn-retry-act">再救一次&nbsp;↗</button>
+            <button class="cta ghost" id="btn-challenge" hidden>挑战更少切换</button>
+            <button class="cta ghost" id="btn-replay-motif" hidden>♪ 再听一次我的页面</button>
+            <button class="cta ghost" id="btn-share">分享战绩</button>
+            <button class="cta ghost" id="btn-home">回到首页</button>
+          </div>
+          <button class="skip mono" id="btn-skip" hidden>跳过演出 →</button>
+        </div>
+      </div>
+
       <!-- 音量弹层 -->
       <div id="vol-pop" hidden data-testid="vol-pop">
-        <label class="mono">总音量 <input type="range" id="vol-master" min="0" max="100" value="65" /></label>
-        <label class="mono">音乐 <input type="range" id="vol-music" min="0" max="100" value="35" /></label>
-        <label class="mono">操作音效 <input type="range" id="vol-sfx" min="0" max="100" value="65" /></label>
+        <label>总音量 <input id="vol-master" type="range" min="0" max="100" value="65" /></label>
+        <label>音乐 <input id="vol-music" type="range" min="0" max="100" value="35" /></label>
+        <label>音效 <input id="vol-sfx" type="range" min="0" max="100" value="65" /></label>
       </div>
 
-      <!-- ===== 结算演出层（固定视口，不随镜头） ===== -->
-      <div id="screen" data-testid="screen" hidden>
-        <div class="scr scr-end" id="scr-end">
-          <div class="cine-stage">
-            <div class="end-code" id="end-code" data-testid="end-code">404</div>
-            <div class="end-hero" id="end-hero" aria-hidden="true">
-              <svg viewBox="0 0 30 44" width="30" height="44">
-                <path d="M-15-42 L5-42 L15-32 L15-4 L-15-4 Z" fill="#F5F0E7" transform="translate(15 44)" />
-              </svg>
-            </div>
-          </div>
-          <div class="end-title" id="end-title">页面保住了</div>
-          <div class="end-stats mono" id="end-stats" data-testid="end-stats"></div>
-          <div class="end-actions">
-            <button class="cta" id="btn-retry" data-testid="btn-retry">再改写一次&nbsp;→</button>
-            <button class="cta ghost" id="btn-challenge" hidden>挑战更少编辑</button>
-            <button class="cta ghost" id="btn-replay-motif" hidden>♪ 再听一次我的页面</button>
-            <button class="cta ghost" id="btn-share" hidden>分享战绩</button>
-            <button class="cta ghost" id="btn-home" hidden>回到封面</button>
-          </div>
-          <button class="skip mono" id="btn-skip" hidden>跳过演出&nbsp;⏭</button>
-        </div>
-      </div>
-
-      <div id="pause-veil" hidden data-testid="pause-veil">
-        <div class="pause-card">
-          <div class="pause-title mono">PAUSED</div>
-          <p class="mono">追兵已冻结 · 点击画面或按 SPACE 继续</p>
-        </div>
-      </div>
-
-      <div id="boot-hint" role="status">
-        <span class="boot-fold"></span>
-        <p>正在排版这个世界…</p>
-        <p id="boot-error" hidden>加载失败，<a href="javascript:location.reload()">重试</a></p>
-      </div>
-      <noscript>
-        <p style="position: fixed; inset: 0; display: grid; place-items: center; color: #141615">
-          这只 404 需要 JavaScript 才能醒来。
-        </p>
-      </noscript>
+      <div id="boot-hint" class="mono" aria-hidden="true">RE:FLOW 404 · 正在唤醒页面…</div>
+      <div id="boot-error" class="mono" hidden>页面初始化失败，请刷新重试。</div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
