@@ -131,7 +131,7 @@ export class StageView {
     this.ghostLayer.replaceChildren(
       ...ghosts.map((g) => {
         const e = document.createElement('div');
-        e.className = `ghost gen${g.gen % 2 === 1 ? 1 : 2}${g.deadline - now < 0.7 ? ' dying' : ''}`;
+        e.className = `v5-ghost gen${g.gen % 2 === 1 ? 1 : 2}${g.deadline - now < 0.7 ? ' dying' : ''}`;
         e.style.left = `${g.x}px`;
         e.style.width = `${g.w}px`;
         e.title = `旧排版剩余 ${Math.max(0, g.deadline - now).toFixed(1)} 秒`;

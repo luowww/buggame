@@ -129,7 +129,7 @@ body {
 .cta:hover, .cta:focus-visible { background: var(--shell-ink); color: var(--shell-paper); outline: none; }
 .cta.solid { background: var(--brand-vermilion); border-color: var(--brand-vermilion); color: var(--shell-paper); }
 .cta.solid:hover { transform: translateX(3px); }
-.cta.ghost { border-color: rgba(20, 22, 21, 0.35); font-weight: 600; }
+.cta.v5-ghost { border-color: rgba(20, 22, 21, 0.35); font-weight: 600; }
 .poster-how {
   font-size: 12px;
   line-height: 2.1;
@@ -274,23 +274,23 @@ body {
 
 /* ---- 残影：消失的真实布局留下的短寿命平台 ---- */
 #ghost-layer { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
-.ghost {
+.v5-ghost {
   position: absolute; top: 390px; height: 48px; border-radius: 3px;
   border: 2px solid #aeeaff;
   background: linear-gradient(90deg, rgba(97, 223, 255, 0.12), rgba(144, 247, 229, 0.2));
   box-shadow: 0 0 18px rgba(120, 220, 255, 0.28);
 }
-.ghost::before {
+.v5-ghost::before {
   content: 'PAST LAYOUT'; position: absolute; top: -18px; left: 2px;
   font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em; color: rgba(174, 234, 255, 0.8);
 }
-.ghost.gen2 {
+.v5-ghost.gen2 {
   border-color: #c9a6ff;
   background: linear-gradient(90deg, rgba(201, 166, 255, 0.1), rgba(174, 234, 255, 0.16));
   box-shadow: 0 0 18px rgba(201, 166, 255, 0.26);
 }
-.ghost.gen2::before { content: 'PAST LAYOUT · GEN 2'; color: rgba(201, 166, 255, 0.85); }
-.ghost.dying { animation: ghostDying 0.34s steps(2) infinite; }
+.v5-ghost.gen2::before { content: 'PAST LAYOUT · GEN 2'; color: rgba(201, 166, 255, 0.85); }
+.v5-ghost.dying { animation: ghostDying 0.34s steps(2) infinite; }
 @keyframes ghostDying { 50% { opacity: 0.32; } }
 
 /* ---- 清理线：追上即删 ---- */
