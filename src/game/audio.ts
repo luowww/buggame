@@ -8,7 +8,7 @@ export class CityAudio {
   private beat = 0;
   private next = 0;
   recovered = false;
-  city: 'dock'|'forge' = 'dock';
+  city: 'dock'|'forge'|'thread' = 'dock';
   unlock(): void {
     try {
       if(!this.ctx){this.ctx=new AudioContext();this.bus=this.ctx.createGain();this.bus.gain.value=0;const limiter=this.ctx.createDynamicsCompressor();limiter.threshold.value=-16;limiter.ratio.value=6;this.bus.connect(limiter);limiter.connect(this.ctx.destination);}
@@ -38,7 +38,7 @@ export class CityAudio {
     if(!this.ctx||this.paused)return;
     const now=this.ctx.currentTime;
     if(this.next<now-.5)this.next=now+.05;
-    const notes=this.recovered?[146.83,185,220,277.18,293.66,220,185,164.81]:[146.83,164.81,220,196,146.83,130.81,164.81,110];
+    const notes=this.city==='thread'?(this.recovered?[130.81,164.81,196,261.63,293.66,261.63,196,164.81]:[130.81,146.83,196,174.61,130.81,116.54,146.83,98]):this.recovered?[146.83,185,220,277.18,293.66,220,185,164.81]:[146.83,164.81,220,196,146.83,130.81,164.81,110];
     while(this.next<now+.2){
       const at=this.next;
       if(this.beat%4===0){this.tone(notes[Math.floor(this.beat/4)%8]/2,at,2.5,.09,'sine');this.tone(notes[Math.floor(this.beat/4)%8],at,3,.025,'triangle');}
@@ -48,7 +48,8 @@ export class CityAudio {
         if(this.beat%2===1)this.tone(110*(1+this.beat%3),at,.06,.018,'square');
         if(this.beat%8===4)this.tone(55,at,.16,.08,'triangle');
       }
-      this.beat++;this.next+=60/(this.city==='forge'?110:88)/2;
+      if(this.city==='thread'&&this.beat%2===1)this.tone(notes[this.beat%8]*2,at,.24,.019,'triangle');
+      this.beat++;this.next+=60/(this.city==='thread'?104:this.city==='forge'?110:88)/2;
     }
   }
   cue(kind:'scan'|'select'|'fail'|'success'|'step'|'jump'): void {

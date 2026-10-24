@@ -10,7 +10,7 @@ export class GameInput {
   private lookPosition={x:0,y:0};
   constructor(canvas: HTMLCanvasElement) {
     window.addEventListener('keydown',e=>{
-      if(e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement)return;
+      if((e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement)&&!['Tab','Escape'].includes(e.code))return;
       if(['Tab','Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
       this.keys.add(e.code);if(!e.repeat)this.onAction(e.code);
     });

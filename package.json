@@ -1,14 +1,16 @@
 {
   "name": "reflow-404",
   "private": true,
-  "version": "6.1.0",
+  "version": "6.2.0",
   "type": "module",
-  "description": "RE:FLOW 404《断点之城》——指针港与脉冲炉双城探索，晴雨交互、因果修复与八位进位升降台。",
+  "description": "RE:FLOW 404《断点之城》——指针港、脉冲炉、千线程三城探索，天气电路、四关并发主线、两关支线与双线疏散。",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "verify": "npm test && npm run build && node scripts/check-release.mjs",
+    "release:check": "npm run verify && node scripts/check-release.mjs --strict"
   },
   "devDependencies": {
     "@types/three": "^0.186.0",

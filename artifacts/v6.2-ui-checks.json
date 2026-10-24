@@ -1,0 +1,173 @@
+{
+  "version": "6.2.0",
+  "date": "2026-10-25",
+  "method": "CUA normal UI, no game state injection or development teleports",
+  "checks": [
+    {
+      "check": "V6.1 通关存档迁移并进入千线程",
+      "passed": true,
+      "evidence": "继续旅程恢复脉冲炉，E 打开结算，再由下一站按钮进入第三城"
+    },
+    {
+      "check": "未受控重启的锁序修改被拒绝",
+      "passed": true
+    },
+    {
+      "check": "相反锁序重启后仍给出等待环反例",
+      "passed": true
+    },
+    {
+      "check": "单步回放与正确锁序预演",
+      "passed": true
+    },
+    {
+      "check": "正确预演没有提交关卡",
+      "passed": true
+    },
+    {
+      "check": "关闭编辑器撤销未提交的草案",
+      "passed": true,
+      "evidence": {
+        "q": "B",
+        "restart": false
+      }
+    },
+    {
+      "check": "两列车共同先 B 也能真实提交",
+      "passed": true
+    },
+    {
+      "check": "任务册按进度开放主线与支线",
+      "passed": true
+    },
+    {
+      "check": "严格优先调度导致居民电车饥饿的反例",
+      "passed": true
+    },
+    {
+      "check": "虚假唤醒关卡拒绝只检查一次",
+      "passed": true
+    },
+    {
+      "check": "WHILE 支线修复不推进主线阶段",
+      "passed": true
+    },
+    {
+      "check": "分离读写产生真实丢票反例",
+      "passed": true
+    },
+    {
+      "check": "互斥区作为第二种正确解法通过主线",
+      "passed": true
+    },
+    {
+      "check": "检查后设置会出现两个独占者",
+      "passed": true
+    },
+    {
+      "check": "CAS 支线完成并保留当前主线",
+      "passed": true
+    },
+    {
+      "check": "第三城中途重载保留主线与两条支线",
+      "passed": true
+    },
+    {
+      "check": "FIFO 走廊产生超预算缺页",
+      "passed": true
+    },
+    {
+      "check": "仅适合前两个负载的策略被第三个回归拒绝",
+      "passed": true
+    },
+    {
+      "check": "LRU 完成四关主线并保留两关支线",
+      "passed": true
+    },
+    {
+      "check": "全城综合回归读取四个已提交策略",
+      "passed": true
+    },
+    {
+      "check": "实际双线返航后完成四主线与两支线",
+      "passed": true,
+      "evidence": "4 / 4\n主线修复\n2 / 2\n支线故事\n03 / 08\n开放城市"
+    },
+    {
+      "check": "通关重载恢复六关完成记录",
+      "passed": true
+    },
+    {
+      "check": "再次乘坐双线列车不重置六关记录",
+      "passed": true
+    },
+    {
+      "check": "手机 390×844：摇杆移动、原子方案预演并正式验证",
+      "passed": true,
+      "evidence": "三工人预演全部 6 种顺序通过；完成后主线 4/4 与支线 2/2 保留"
+    },
+    {
+      "check": "原生滑杆内 Tab 移到复选框，Escape 关闭且保留完成记录",
+      "passed": true,
+      "evidence": "activeElement=thread-oldest；主线4/4、支线2/2"
+    },
+    {
+      "check": "主暂停菜单冻结正在播放的第三城执行轨迹",
+      "passed": true,
+      "evidence": {
+        "before": "OS-04:preview / 1 OF 17",
+        "after": "OS-04:preview / 1 OF 17"
+      }
+    },
+    {
+      "check": "手机内存策略控件、滚动轨迹与恢复播放",
+      "passed": true,
+      "evidence": "390×844；LRU 7/6/6；暂停后恢复到第14条；底部验证按钮保持可见"
+    },
+    {
+      "check": "第二城重玩后，重载仍恢复第三城六关与通行资格",
+      "passed": true,
+      "evidence": "正常点击第二城重玩 → 地图进入第三城 → 刷新继续；六张卡片均已修复，人物称谓已统一"
+    },
+    {
+      "check": "三城九轮往返与已完成首城状态保留",
+      "passed": true,
+      "evidence": {
+        "samples": [
+          "130 FPS / 7.7 ms 56 draws · 25.1k tris 381 geom · 34 tex",
+          "144 FPS / 6.9 ms 56 draws · 25.1k tris 384 geom · 34 tex",
+          "144 FPS / 6.9 ms 56 draws · 25.1k tris 390 geom · 35 tex",
+          "144 FPS / 6.9 ms 56 draws · 25.1k tris 390 geom · 35 tex",
+          "144 FPS / 6.9 ms 56 draws · 25.1k tris 390 geom · 35 tex",
+          "144 FPS / 6.9 ms 56 draws · 25.1k tris 390 geom · 35 tex",
+          "144 FPS / 6.9 ms 56 draws · 25.1k tris 390 geom · 35 tex",
+          "144 FPS / 6.9 ms 56 draws · 25.1k tris 390 geom · 35 tex",
+          "144 FPS / 6.9 ms 56 draws · 25.1k tris 390 geom · 35 tex"
+        ],
+        "stableFinalSix": "390 geom · 35 tex，绘制56；这是短时资源观察，非完整内存分析"
+      }
+    },
+    {
+      "check": "最终手机结算、任务册滚动与晴雨切换",
+      "passed": true,
+      "evidence": "390×844：六关完成记录；固定任务册关闭按钮；雨天场景截图已更新"
+    },
+    {
+      "check": "第三城低画质与降低动态设置可切换且保持六关结算",
+      "passed": true,
+      "evidence": "三角面从69.6k降到64.7k，完成记录4/4与2/2保留"
+    },
+    {
+      "check": "最终构建：检查点返回、双塔结算与浏览器错误检查",
+      "passed": true,
+      "evidence": "六关结算完整；最终控制台错误数 0"
+    }
+  ],
+  "finalConsoleErrors": [],
+  "sourceFingerprint": "c47cfb438a9671946fe50f41d462b7f8081c65de75bb6b00d36478686e58b855",
+  "review": "docs/v6/THREAD_REVIEW.md",
+  "buildAssets": [
+    "assets/index-NTS0SLVM.js",
+    "assets/index-DJXH3m6M.css"
+  ]
+}

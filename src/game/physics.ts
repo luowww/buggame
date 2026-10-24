@@ -3,6 +3,8 @@ export interface V3 { x: number; y: number; z: number }
 export interface Surface { id: string; x: number; z: number; w: number; d: number; y: number; rise?: number; enabled?: boolean }
 export interface Obstacle { x: number; z: number; w: number; d: number; bottom: number; top: number }
 export interface Intent { x: number; z: number; jump: boolean; sprint: boolean }
+export interface WorldBounds { minZ:number; maxZ:number; maxX:number; fallY:number }
+export const DOCK_BOUNDS:WorldBounds={minZ:-114,maxZ:114,maxX:145,fallY:-7};
 export const START: V3 = { x: 0, y: 3, z: 31 };
 export const A_CHECKPOINT={x:0,y:13,z:-44};
 export const CHECKPOINTS = { meet: START, reorder: { x: 0, y: 3, z: 10 }, rail: { x: 0, y: 3, z: 9 }, board: { x: 5, y: 13, z: -46 }, complete: { x: 18, y: 13, z: -98 } };
@@ -30,7 +32,7 @@ export class Motor {
   private jumpHeld = false;
   private respawnTimer = 0;
   falls = 0;
-  constructor(public surfaces: Surface[], public obstacles: Obstacle[] = []) {}
+  constructor(public surfaces: Surface[], public obstacles: Obstacle[] = [], public bounds:WorldBounds={...DOCK_BOUNDS}) {}
   warp(position: V3): void {
     this.position = { ...position }; this.velocity = { x: 0, y: 0, z: 0 };
     this.grounded = true; this.coyote = 0.12; this.jumpBuffer = 0; this.respawnTimer = 0;
@@ -67,12 +69,12 @@ export class Motor {
     this.position.y += this.velocity.y * dt;
     const floor = floorAt(this.surfaces, this.position.x, this.position.z, priorY + (this.grounded ? 0.65 : 0.05));
     if (floor !== null && this.position.y <= floor && this.velocity.y <= 0) {
-      this.position.y = floor; this.velocity.y = 0; this.grounded = true; this.respawnTimer = 0;
+      this.position.y = floor; this.velocity.y = 0; this.grounded = true;
     } else this.grounded = false;
-    if (this.position.y < -7 || Math.abs(this.position.x) > 145 || this.position.z < -114 || this.position.z > 114) {
+    if (this.position.y < this.bounds.fallY || Math.abs(this.position.x) > this.bounds.maxX || this.position.z < this.bounds.minZ || this.position.z > this.bounds.maxZ) {
       this.respawnTimer += dt;
       if (this.respawnTimer >= 0.25) { this.falls++; this.warp(this.checkpoint); return true; }
-    }
+    } else this.respawnTimer=0;
     return false;
   }
 }

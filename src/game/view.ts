@@ -5,15 +5,17 @@ import type { V3 } from './physics';
 import { PulseWorld } from './pulse-world';
 import { WeatherRig } from './weather';
 import type { Weather } from './forge-domain';
+import { ThreadWorld } from './thread-world';
 
-export type ViewMode = 'menu' | 'follow' | 'order' | 'rail' | 'recovery' | 'ride' | 'result' | 'forge-arrival' | 'forge-power' | 'forge-alu' | 'forge-rise' | 'forge-result';
+export type ViewMode = 'menu' | 'follow' | 'order' | 'rail' | 'recovery' | 'ride' | 'result' | 'forge-arrival' | 'forge-power' | 'forge-alu' | 'forge-rise' | 'forge-result' | 'thread-arrival' | 'thread-device' | 'thread-audit' | 'thread-ride' | 'thread-result';
 export class CityView {
   renderer: T.WebGLRenderer;
   camera = new T.PerspectiveCamera(62,1,.15,1300);
   world = new CityWorld();
   dockWeather = new WeatherRig(this.world.scene,false,this.world.sky,this.world.rain);
   forge: PulseWorld | null = null;
-  city: 'dock' | 'forge' = 'dock';
+  thread: ThreadWorld | null = null;
+  city: 'dock' | 'forge' | 'thread' = 'dock';
   weather: Weather = 'rain';
   mode: ViewMode = 'menu';
   yaw = 0;
@@ -52,13 +54,14 @@ export class CityView {
     this.settings=settings;
     this.renderer.setPixelRatio(Math.min(devicePixelRatio,settings.quality==='low'?1:1.65));
     this.world.setQuality(settings.quality==='low');
-    this.dockWeather.setQuality(settings.quality==='low');this.forge?.setQuality(settings.quality==='low');
+    this.dockWeather.setQuality(settings.quality==='low');this.forge?.setQuality(settings.quality==='low');this.thread?.setQuality(settings.quality==='low');
   }
-  switchCity(city:'dock'|'forge'):void {
+  switchCity(city:'dock'|'forge'|'thread'):void {
     this.city=city;
     if(city==='forge'&&!this.forge){this.forge=new PulseWorld();this.forge.setQuality(this.settings.quality==='low');}
+    if(city==='thread'&&!this.thread){this.thread=new ThreadWorld();this.thread.setQuality(this.settings.quality==='low');}
     this.warmup=true;
-    this.renderer.domElement.setAttribute('aria-label',`${city==='forge'?'脉冲炉':'指针港'}三维场景；WASD 移动，右键看四周，Q 扫描，E 互动`);
+    this.renderer.domElement.setAttribute('aria-label',`${city==='thread'?'千线程':city==='forge'?'脉冲炉':'指针港'}三维场景；WASD 移动，右键看四周，Q 扫描，E 互动`);
   }
   resize(): void {
     this.width=window.innerWidth;this.height=window.innerHeight;
@@ -86,14 +89,28 @@ export class CityView {
   }
   render(dt: number,hero: V3,speed: number,paused: boolean): void {
     this.elapsed+=dt;
-    const active=this.city==='forge'&&this.forge?this.forge:this.world;
+    const active=this.city==='thread'&&this.thread?this.thread:this.city==='forge'&&this.forge?this.forge:this.world;
+    if(this.city==='thread'&&this.thread)this.thread.weather.weather=this.weather;
+    if(this.city==='forge'&&this.forge)this.forge.weather.weather=this.weather;
     active.update(paused?0:dt,hero,paused?0:speed,paused||this.mode==='order'||this.mode==='rail',this.settings.reducedMotion);
     if(active===this.world){this.dockWeather.weather=this.weather;this.dockWeather.update(paused?0:dt,hero,this.settings.reducedMotion,this.world.surfaces);}
-    else if(this.forge)this.forge.weather.weather=this.weather;
     this.world.nodes.visible=this.mode==='rail';
     if(this.mode==='menu') {
       const drift=this.settings.reducedMotion?0:Math.sin(this.elapsed*.07)*1.8;
       this.desired.set(6+drift,27,55);this.target.set(14,26,-70);
+    } else if(this.mode==='thread-arrival') {
+      this.desired.set(-24,72,78);this.target.set(0,39,-104);
+    } else if(this.mode==='thread-device'&&this.thread) {
+      const p=this.thread.focus;
+      this.desired.set(p.x+23,p.y+19,p.z+29);this.target.set(p.x+1,p.y+4,p.z-1);
+    } else if(this.mode==='thread-audit') {
+      this.desired.set(38,66,-153);this.target.set(0,42,-187);
+    } else if(this.mode==='thread-ride') {
+      const outward=new T.Vector3(hero.x,0,hero.z+120).normalize();
+      this.desired.set(hero.x+outward.x*35,hero.y+16,hero.z+outward.z*35);
+      this.target.set(hero.x*.65,hero.y+3,-120+(hero.z+120)*.65);
+    } else if(this.mode==='thread-result') {
+      this.desired.set(88,104,-32);this.target.set(1,46,-116);
     } else if(this.mode==='forge-arrival') {
       this.desired.set(-25,58,65);this.target.set(5,31,-62);
     } else if(this.mode==='forge-power') {

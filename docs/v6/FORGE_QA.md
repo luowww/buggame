@@ -1,5 +1,7 @@
 # V6.1 指针港 + 脉冲炉 · 验收记录
 
+> 本文保留 V6.1 双城历史基线。当前 V6.2 的第三城与跨城回归见 [THREAD_REVIEW.md](THREAD_REVIEW.md)。
+
 日期：2026-10-24，Asia/Shanghai。环境：Windows、Node.js 24.15.0、Chromium 系 Codex 内置浏览器。主界面 1280×720，手机界面使用实际 390×844 浏览器视口覆盖；不等同于手机硬件测试。
 
 ## 交付内容

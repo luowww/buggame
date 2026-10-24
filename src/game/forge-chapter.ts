@@ -20,7 +20,7 @@ const stageCopy = {
 interface Hooks {
   campaign:()=>Campaign; view:CityView; motor:Motor; audio:CityAudio;
   block:(on:boolean)=>void; persist:()=>void; toast:(s:string,n?:number)=>void;
-  clearInput:()=>void; weather:(w:Weather)=>void; returnDock:()=>void;
+  clearInput:()=>void; weather:(w:Weather)=>void; returnDock:()=>void; enterThread:()=>void;
 }
 export class ForgeChapter {
   panel:'power'|'carry'|null=null;
@@ -38,14 +38,15 @@ export class ForgeChapter {
       <div class="forge-panel-foot"><button id="forge-preview" class="text-button">检测当前状态 ↗</button><button id="forge-verify" class="primary">验证并接入 <kbd>R</kbd> →</button></div>
     </section>
     <div id="forge-cinema" hidden><div class="forge-cinema-top mono">CIVITAS / <span id="forge-run-id"></span></div><div class="forge-cinema-copy"><div id="forge-cinema-kicker" class="eyebrow"></div><h2 id="forge-cinema-title"></h2><p id="forge-cinema-detail"></p><button id="forge-skip" class="text-button">跳过镜头 →</button></div></div>
-    <section id="forge-result" hidden><div class="eyebrow">CHAPTER 02 / PULSE FORGE</div><div class="forge-result-code">200 <span>OK</span></div><h2>归零不是遗忘。<br>还有下一位，在等你。</h2><p>晴天留下能量，雨水带走热量。<br>你让城市记住了越过边界的那一点光。</p><div id="forge-result-stats"></div><button id="forge-roam" class="primary">留在脉冲炉 ↗</button><button id="forge-return" class="text-button">乘城际列车返回指针港 →</button><button id="forge-replay" class="text-button">重新修复脉冲炉 ↶</button><div class="forge-next mono">02 / 08 城市已开放<br><span>下一程 · 千线程 / 规划中</span></div></section>
+    <section id="forge-result" hidden><div class="eyebrow">CHAPTER 02 / PULSE FORGE</div><div class="forge-result-code">200 <span>OK</span></div><h2>归零不是遗忘。<br>还有下一位，在等你。</h2><p>晴天留下能量，雨水带走热量。<br>你让城市记住了越过边界的那一点光。</p><div id="forge-result-stats"></div><button id="forge-next-city" class="primary">下一站 · 千线程 →</button><button id="forge-roam" class="text-button">留在脉冲炉 ↗</button><button id="forge-return" class="text-button">乘城际列车返回指针港 →</button><button id="forge-replay" class="text-button">重新修复脉冲炉 ↶</button><div class="forge-next mono">03 / 08 城市已开放<br><span>第三城 · 千线程 / 四关主线 + 两关支线</span></div></section>
     <button id="forge-return-small" class="text-button" hidden>← 返回指针港</button>
     </div>`;
     $('app').append(root);
     $('forge-close').onclick=()=>this.closePanel();$('forge-preview').onclick=()=>this.verify(true);$('forge-verify').onclick=()=>this.verify();
     $('forge-skip').onclick=()=>this.finishCinema();$('forge-roam').onclick=()=>this.roam();
     $('forge-return').onclick=()=>this.h.returnDock();$('forge-return-small').onclick=()=>this.h.returnDock();
-    $('forge-replay').onclick=()=>{this.h.campaign().data.forge=freshForge();this.enter();};
+    $('forge-next-city').onclick=()=>this.h.enterThread();
+    $('forge-replay').onclick=()=>{const data=this.h.campaign().data;if(data.forge.phase==='complete')data.forgeClearance=structuredClone(data.forge);data.forge=freshForge();this.enter();};
   }
   get active():boolean {return this.h.view.city==='forge';}
   get blocked():boolean {return this.panel!==null||this.cinema!==null||this.result;}
@@ -182,7 +183,7 @@ export class ForgeChapter {
     const kind=this.cinema?.kind;if(!kind)return;
     this.cinema=null;show('forge-cinema',false);this.h.view.forge!.setReplay(false);
     if(kind==='lift'){
-      this.state.phase='complete';this.sync();this.h.view.forge!.liftY=50;this.h.motor.warp(SUMMIT);this.h.persist();this.showResult();return;
+      this.state.phase='complete';this.h.campaign().data.forgeClearance=structuredClone(this.state);this.sync();this.h.view.forge!.liftY=50;this.h.motor.warp(SUMMIT);this.h.persist();this.showResult();return;
     }
     this.h.block(false);this.h.view.mode='follow';this.h.clearInput();this.updateHud();
     if(kind==='power')this.h.toast('沿展开的铜色通道前行，登上两段坡道，在塔底扫描电梯。',6);
@@ -190,7 +191,7 @@ export class ForgeChapter {
   showResult():void {
     this.result=true;this.h.block(true);show('patch-panel',false);show('forge-result',true);show('interact-prompt',false);show('forge-return-small',false);this.h.view.mode='forge-result';
     const data=this.h.campaign().data;
-    $('forge-result-stats').innerHTML=`<span><b>02 / 08</b>已开放城市</span><span><b>65,536</b>加法回归</span><span><b>${Math.floor(data.elapsed/60)}分${Math.floor(data.elapsed%60)}秒</b>累计旅程</span>`;
+    $('forge-result-stats').innerHTML=`<span><b>03 / 08</b>已开放城市</span><span><b>65,536</b>加法回归</span><span><b>${Math.floor(data.elapsed/60)}分${Math.floor(data.elapsed%60)}秒</b>累计旅程</span>`;
     this.h.audio.cue('success');this.h.persist();
   }
   private roam():void {
