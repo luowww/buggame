@@ -485,8 +485,10 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
+// nvp=1：无头浏览器/自动化截图用——页面 hidden 时不自动暂停（正式行为不变）
+const NO_AUTO_PAUSE = new URLSearchParams(location.search).get('nvp') === '1';
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden && appMode === 'playing') setPaused(true);
+  if (!NO_AUTO_PAUSE && document.hidden && appMode === 'playing') setPaused(true);
   prev = performance.now();
 });
 window.addEventListener('resize', layoutWorld);

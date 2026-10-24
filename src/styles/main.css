@@ -215,7 +215,7 @@ body {
   border-radius: var(--r-card);
   box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
   white-space: nowrap;
-  overflow: hidden;
+  /* 不设 overflow:hidden——会裁掉右上角外凸的拖拽手柄（hit-test 同被裁） */
   cursor: pointer;
 }
 .mod-h1 .mod-sub {
@@ -248,7 +248,7 @@ body {
   border-top: 2px solid rgba(245, 240, 231, 0.35);
   border-radius: var(--r-card);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
+  /* 不设 overflow:hidden——会裁掉右上角外凸的拖拽手柄（hit-test 同被裁） */
   cursor: pointer;
 }
 .mod-article .art-title { font-size: 15px; font-weight: 700; white-space: nowrap; color: var(--page-paper); }
@@ -512,6 +512,8 @@ body {
   background: rgba(238, 234, 225, 0.88);
   cursor: pointer;
 }
+/* display:grid 压过 UA 的 [hidden]{display:none}，必须显式恢复，否则遮罩常驻并拦截全部指针 */
+#pause-veil[hidden] { display: none; }
 .pause-card { text-align: center; }
 .pause-title { font-size: 28px; font-weight: 800; margin-bottom: 10px; letter-spacing: 0.3em; }
 .pause-card p { font-size: 12px; color: var(--shell-dim); letter-spacing: 0.1em; }
