@@ -1,0 +1,72 @@
+{
+  "version": 6,
+  "date": "2026-10-24",
+  "method": "CUA browser UI and Playwright locators against production dist; no state injection",
+  "viewport": {
+    "height": 720,
+    "width": 1280
+  },
+  "checks": [
+    {
+      "id": "prod-menu",
+      "pass": true
+    },
+    {
+      "id": "order-counterexample",
+      "pass": true
+    },
+    {
+      "id": "preview-isolated",
+      "pass": true
+    },
+    {
+      "id": "order-commit-replay",
+      "pass": true
+    },
+    {
+      "id": "walk-to-elevated-A",
+      "pass": true
+    },
+    {
+      "id": "rail-cycle-rejected",
+      "pass": true
+    },
+    {
+      "id": "3d-node-drag",
+      "pass": true
+    },
+    {
+      "id": "rail-recovery-replay",
+      "pass": true
+    },
+    {
+      "id": "train-to-result",
+      "pass": true
+    },
+    {
+      "id": "restart-restores-broken-route",
+      "pass": true
+    },
+    {
+      "id": "pause-dialog",
+      "pass": true
+    },
+    {
+      "id": "map-panel",
+      "pass": true
+    },
+    {
+      "id": "sound-enable",
+      "pass": true
+    },
+    {
+      "id": "sound-disable",
+      "pass": true
+    },
+    {
+      "id": "no-browser-errors",
+      "pass": true
+    }
+  ],
+  "consoleErrors": []
+}

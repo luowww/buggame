@@ -4,23 +4,25 @@
 
 ## 总原则
 
-本作**零外部素材**：无图片、无音频文件、无第三方字体文件。
+本页以 V6 正式入口为准。城市、实机角色、纹理、界面与声音由原创代码生成；独立角色卡使用本次生成的 AI 概念图。没有下载第三方游戏模型、音乐或字体。
 
 | 类别 | 实现 | 来源 |
 | --- | --- | --- |
-| 网页世界（标题/按钮/卡片平台、地面、墙） | 真实 HTML 元素 + CSS（`src/styles/main.css`） | 原创代码 |
-| 主角零四 + 清理波 + 粒子 | Canvas 2D 程序化逐帧绘制（`src/effects/CharacterRenderer.ts`） | 原创代码 |
-| 音效（纸张滑动/陶瓷吸附/boop 弹跳/清理波低频呼吸/胜利和弦） | Web Audio 振荡器 + 噪声实时合成（`src/ui/AudioManager.ts`） | 原创合成 |
+| 三维指针港、站台、轨道、列车、窗格与地面纹理 | Three.js 几何、实例化和 CanvasTexture（`src/game/world.ts`） | 原创代码 |
+| 零号及 NPC | 断环、外骨骼、披风和因果织针的程序化低多边形模型（`makeAvatar`） | 原创设定与建模代码 |
+| 雨与港口水面 | 原创 GLSL 与种子化缓冲几何（`src/game/world.ts`） | 原创代码 |
+| 音乐与交互反馈 | Web Audio 实时合成，故障/恢复编曲（`src/game/audio.ts`） | 原创合成 |
 | 字体 | 系统字体栈（PingFang SC / Microsoft YaHei / monospace），无外嵌字体 | 系统自带 |
 | 图标 favicon | 内联 SVG data URI | 原创 |
-| 角色设定图 | `docs/character-card/zero-four.svg` 代码绘制 | 原创 |
+| V6 角色概念图 | `public/art/null-zero-concept.png` | 内置 imagegen，本次原创提示词生成；完整记录在 `docs/v6/CHARACTER_PROMPT.md` |
+| V5 角色卡及旧页面 | `docs/character-card/zero-four.svg`、`legacy-v5.html` | 历史原创素材；不作为 V6 实机画面 |
 
 ## 第三方依赖
 
-仅构建工具链：`vite@5.4.11`、`typescript@5.6.3`、`vitest@2.1.8`（均 MIT 许可，版本锁定于 package-lock.json）。**运行时零依赖**——生产包 gzip 仅 ~12KB。
+运行时依赖 Three.js 0.186.1（MIT），包括其 RoundedBoxGeometry 附加几何工具。开发工具使用 Vite 8.3.5（MIT）、Vitest 5.0.5（MIT）、TypeScript 5.6.3（Apache-2.0）、Playwright（Apache-2.0）及 @types/three（MIT）。精确安装树记录在 `package-lock.json`，依赖版权声明保留于软件包和正式分发的 `THIRD_PARTY_NOTICES.txt`。
 
 ## AI 工具使用记录
 
-- 设计与编程：AI 编程协作工具（Codex 类）按《RE:FLOW 404 总纲 v3》执行，含纯逻辑引擎、DOM 物理桥、自动化测试。
-- 角色：依总纲提示词方案设计，以程序化绘制落地（见 CHARACTER_CARD.md 第 ④ 节，如实标注）。
+- 设计与编程：Codex 按用户提供的 V6 设计包进行首章实现，包含独立领域模拟、3D 场景、交互、音频与测试。
+- 角色：内置 imagegen 生成概念设定图；当前实机模型为代码建模，并未将概念渲染冒充游戏截图。
 - 运行时不调用任何网络 API / 云端模型。

@@ -1,147 +1,68 @@
 <!doctype html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-    <meta name="theme-color" content="#EEEAE1" />
-    <title>RE:FLOW 404 · 消失的排版能救命</title>
-    <meta
-      name="description"
-      content="真正的网页排版，就是你能踩踏的世界。拖动视口宽度，让消失的旧布局留下可踩的残影，救出一个即将被删除的 404 小生命。"
-    />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230C0E10'/%3E%3Ctext x='16' y='22' font-size='14' font-weight='900' text-anchor='middle' fill='%23EE5337'%3E404%3C/text%3E%3C/svg%3E" />
-  </head>
-  <body>
-    <div id="app">
-      <header id="shell-header">
-        <div class="brand">
-          <span class="brand-mark mono">RE:FLOW</span>
-          <span class="brand-404">404</span>
-        </div>
-        <span class="shell-mid mono">REAL CSS · LIVE REFLOW · TEMPORARY MEMORY</span>
-        <div class="header-actions">
-          <button id="btn-sound" class="chip mono" data-testid="btn-sound">♪ 开启声音</button>
-          <button id="btn-pause" class="chip mono" data-testid="btn-pause" hidden>‖ 暂停</button>
-        </div>
-      </header>
-
-      <div id="shell-body">
-        <!-- 左：品牌海报栏 -->
-        <aside id="brand-col">
-          <div class="poster-kicker mono">THE PAGE REMEMBERS.</div>
-          <h1 class="poster-title">
-            消失<br />的排版<br />
-            <span class="poster-404">能<span class="misreg">救</span>命</span>
-          </h1>
-          <p class="poster-sub">
-            一个小生命正被网页删除。<b>拖动网页宽度，让旧布局留下能踩踏的残影。</b><br />
-            这一刻，响应式设计就是时间魔法：系统说找不到，不等于存在没有意义。
-          </p>
-          <div class="poster-actions">
-            <button class="cta" id="btn-start" data-testid="btn-start">开始逃生&nbsp;↗</button>
-            <button class="cta ghost" id="btn-how">怎么救？</button>
-          </div>
-          <div class="poster-how mono" id="menu-how" hidden>
-            ① 点「开始逃生」，零四自动向右跑<br />
-            ② 跨过断点（690px / 700px / 520px），真实 CSS 会重排<br />
-            ③ 旧排版留下只有几秒的蓝色残影——踩着「过去」走完「现在」<br />
-            ④ 第二关需要两代旧布局接力：电脑 → 平板 → 手机<br />
-            <span class="kbd">SPACE</span> 暂停 · <span class="kbd">R</span> 重试 · <span class="kbd">M</span> 静音
-          </div>
-          <div class="poster-foot mono">
-            <span id="best-line"></span>
-            MOVE&nbsp;THE&nbsp;PAGE&nbsp;·&nbsp;SAVE&nbsp;THE&nbsp;LIFE
-          </div>
-        </aside>
-
-        <!-- 右：V5 舞台 -->
-        <main id="stage-wrap" data-testid="stage">
-          <div class="board-head mono">
-            <span><span class="live-dot">●</span> <span id="case-label">CASE 01 · THE MISSING BRIDGE</span></span>
-            <span id="case-counter">01 / 02</span>
-          </div>
-          <div id="v5-stage" data-testid="v5-stage" aria-label="虚拟网页逃生地图">
-            <div id="v5-world" data-testid="v5-world">
-              <!-- 关卡 DOM（sim-browser + 真实网页元素）由 StageView 注入 -->
-            </div>
-          </div>
-          <div class="statusbar mono">
-            <span id="status-tip" data-testid="status-tip">先点击「开始逃生」，再切换网页宽度</span>
-            <span class="stat"><span id="hud-reflows">REFLOWS <b>0</b></span><span id="hud-time">00.0s</span></span>
-          </div>
-          <div id="v5-control" data-testid="v5-control">
-            <div class="control-head">
-              <h2>把网页拉窄，保留旧版的桥。</h2>
-              <span class="capsule mono" id="mode-badge">DESKTOP / 840PX</span>
-            </div>
-            <p class="control-note">拖动滑块，或直接点布局预设。宽度跨过断点时，真实 CSS 会重排，旧布局以残影保留 <b id="ttl-note">4.4</b> 秒。</p>
-            <div class="meter">
-              <span class="sidetag mono">480px</span>
-              <input id="width-slider" type="range" min="480" max="840" step="10" value="840" aria-label="改变网页宽度" />
-              <span class="sidetag mono">840px</span>
-            </div>
-            <div class="presets" id="preset-row">
-              <!-- 预设按钮由 main.ts 按关卡注入 -->
-              <span style="flex: 1"></span>
-              <button id="btn-retry" class="retry mono">↺ 重置</button>
-            </div>
-          </div>
-          <div id="stage-tip" class="mono" data-testid="stage-tip"></div>
-          <div id="pause-veil" hidden>
-            <div class="pause-card">
-              <div class="pause-title">PAUSED</div>
-              <p>追兵已冻结 · 点击画面或按 SPACE 继续</p>
-            </div>
-          </div>
-        </main>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#10272e" />
+  <meta name="description" content="RE:FLOW 404《断点之城》：探索一座正在运行的三维故障港城，扫描事件、改写因果、重放世界。系统找不到你，不代表你不存在。" />
+  <title>RE:FLOW 404 · 断点之城</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23101d24'/%3E%3Cpath d='M43 15a22 22 0 1 1-22 0' fill='none' stroke='%23ffca7b' stroke-width='6'/%3E%3Ccircle cx='33' cy='33' r='4' fill='%23ff4f63'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <div id="world-host"></div>
+  <div class="film-vignette" aria-hidden="true"></div>
+  <div id="app" data-mode="menu">
+    <header class="topbar">
+      <button class="brand" id="brand-button" aria-label="游戏菜单"><svg viewBox="0 0 38 38" aria-hidden="true"><path d="M25 5a15 15 0 1 1-12 0"/><circle cx="19" cy="19" r="2"/></svg><span>RE:FLOW <b>404</b><small>断点之城</small></span></button>
+      <div class="header-center mono"><span class="status-dot"></span> CIVITAS <span class="header-slash">/</span> CYCLE 1024</div>
+      <nav class="top-actions" aria-label="游戏设置">
+        <button class="icon-button" id="btn-sound" aria-label="声音：关" title="切换声音"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4zM16 9l6 6m0-6-6 6"/></svg><span class="button-label">声音关</span></button>
+        <button class="icon-button" id="btn-settings" aria-label="画面与操作设置" title="画面与操作设置"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16M8 4v6m8 4v6"/></svg><span class="button-label">设置</span></button>
+        <button class="icon-button" id="btn-help" aria-label="操作说明" title="操作说明"><span class="help-icon">?</span></button>
+        <button class="icon-button playing-only" id="btn-pause" aria-label="暂停游戏" title="暂停 Esc"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button>
+      </nav>
+    </header>
+    <main id="menu" class="menu-screen">
+      <div class="menu-copy">
+        <div class="eyebrow"><i></i> A CITY THAT RUNS ON ERRORS.</div>
+        <div class="edition mono">RE:FLOW 404 <span>—</span> EPISODE 01</div>
+        <h1>断点<span>之城</span><em>BREAK THE LOOP.</em></h1>
+        <p class="menu-description">系统说你不存在。<br>但这座城市，<strong>还在等你修复。</strong></p>
+        <p class="menu-sub">潜入运行中的故障都市。看见因果，改写失序，<br class="desktop-break">让一座被遗忘的车站，重新回到世界。</p>
+        <div class="start-actions"><button id="btn-start" class="primary"><span>进入指针港</span><span class="arrow">↗</span></button><button id="btn-continue" class="text-button" hidden>继续旅程 <span>→</span></button></div>
+        <div class="menu-controls"><span><kbd>W A S D</kbd> 探索</span><span><kbd>Q</kbd> 溯源</span><span><kbd>E</kbd> 改写</span></div>
       </div>
-
-      <footer id="shell-footer">
-        <span class="mono" id="hud-stage" data-testid="hud-stage">CASE 01/02</span>
-        <div class="progress-line"><div id="progress-fill"></div></div>
-        <span class="mono" id="hud-goal" data-testid="hud-goal">拖动网页宽度，改变地形</span>
-        <span class="mono hud-right">
-          <span id="hud-echo" data-testid="hud-echo">ECHO —</span>
-          <span id="hud-edits" data-testid="hud-edits">REFLOWS 00</span>
-          <span id="hud-time-footer" data-testid="hud-time-footer">00:00</span>
-        </span>
-      </footer>
-
-      <!-- 结算演出层（V4 遗产复用） -->
-      <div id="screen" hidden>
-        <div class="scr-end">
-          <div class="cine-stage">
-            <div class="end-code" id="end-code" aria-live="polite">
-              <span class="digit d1">4</span><span class="digit d2">0</span><span class="digit d3">4</span>
-              <span class="arrow">→</span>
-              <span class="digit ok a">2</span><span class="digit ok b">0</span><span class="digit ok c">0</span>
-              <span class="ok-word">OK</span>
-            </div>
-            <div class="end-hero" id="end-hero"></div>
-          </div>
-          <h2 class="end-title" id="end-title">你让消失的<br />东西留下来了。</h2>
-          <div class="end-stats" id="end-stats"></div>
-          <div class="end-actions" id="end-actions">
-            <button class="cta" id="btn-retry-act">再救一次&nbsp;↗</button>
-            <button class="cta ghost" id="btn-challenge" hidden>挑战更少切换</button>
-            <button class="cta ghost" id="btn-replay-motif" hidden>♪ 再听一次我的页面</button>
-            <button class="cta ghost" id="btn-share">分享战绩</button>
-            <button class="cta ghost" id="btn-home">回到首页</button>
-          </div>
-          <button class="skip mono" id="btn-skip" hidden>跳过演出 →</button>
-        </div>
-      </div>
-
-      <!-- 音量弹层 -->
-      <div id="vol-pop" hidden data-testid="vol-pop">
-        <label>总音量 <input id="vol-master" type="range" min="0" max="100" value="65" /></label>
-        <label>音乐 <input id="vol-music" type="range" min="0" max="100" value="35" /></label>
-        <label>音效 <input id="vol-sfx" type="range" min="0" max="100" value="65" /></label>
-      </div>
-
-      <div id="boot-hint" class="mono" aria-hidden="true">RE:FLOW 404 · 正在唤醒页面…</div>
-      <div id="boot-error" class="mono" hidden>页面初始化失败，请刷新重试。</div>
-    </div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+      <div class="city-caption"><div class="caption-rule"></div><span class="mono">01 / POINTER DOCK</span><h2>指针港</h2><p>一列永远跳过 B 站的列车。<br>一个还在等待的人。</p><div class="coordinate mono">31°24′ N &nbsp; 121°48′ E <span>● SIGNAL LOST</span></div></div>
+      <div class="menu-alert mono"><span class="error-indicator"></span> GLOBAL ASSERTION FAILED <span class="alert-detail">A.next → C &nbsp; / &nbsp; B: UNREACHABLE</span></div>
+      <footer class="menu-footer"><span class="mono">NULL · ZERO <i>/</i> 因果调查员 000</span><span>探索 · 推理 · 修复</span><button id="btn-about" class="text-button">关于这个世界 <span>↗</span></button></footer>
+    </main>
+    <section id="hud" hidden aria-label="游戏信息">
+      <div class="compass mono" aria-hidden="true"><span>W</span><i></i><span class="compass-n">N</span><i></i><span>E</span></div>
+      <aside class="objective"><div class="objective-kicker mono"><span id="quest-code">PROLOGUE / 00</span><span class="quest-line"></span></div><h2 id="quest-title">找到站长 MIRA</h2><p id="quest-description">沿着港口灯带向前。有人在等你。</p><div class="quest-distance mono" id="quest-distance"></div><button class="objective-hint" id="btn-hint">需要一点线索？ <span>↗</span></button></aside>
+      <div id="world-markers"></div>
+      <div id="interact-prompt" hidden><button id="btn-interact"><kbd>E</kbd><span id="interact-label">与 MIRA 对话</span><span class="prompt-arrow">↗</span></button></div>
+      <div class="identity"><svg viewBox="0 0 30 30" aria-hidden="true"><path d="M20 4a12 12 0 1 1-10 0"/><circle cx="15" cy="15" r="2"/></svg><div><b>NULL · ZERO</b><span class="mono" id="identity-status">身份未知 / UNKNOWN</span></div><div class="identity-bars"><i></i><i></i><i></i></div></div>
+      <nav class="tools" aria-label="因果织针"><button id="tool-trace"><kbd>Q</kbd><span>溯源<small>TRACE</small></span></button><button id="tool-patch"><kbd>E</kbd><span>断点<small>BREAK</small></span></button><button id="tool-map"><kbd>M</kbd><span>城市图<small>MAP</small></span></button></nav>
+      <button class="mini-map" id="btn-map" aria-label="打开指针港地图"><svg id="mini-svg" viewBox="-42 -115 115 165"><g class="map-roads"><path d="M0 40V-49L56-82 18-98M0-49 37-56 56-82M0-43H32V-56M-18 40V-18"/></g><path id="mini-route" d="M0-49 56-82 18-98"/><g class="map-nodes"><circle cx="0" cy="-49" r="3"/><circle class="b-node" cx="37" cy="-56" r="3"/><circle cx="56" cy="-82" r="3"/><circle cx="18" cy="-98" r="3"/></g><g class="map-labels"><text x="-8" y="-55">A</text><text x="42" y="-52">B</text><text x="61" y="-79">C</text><text x="25" y="-99">END</text></g><path id="mini-player" d="M0-4 3 4 0 2-3 4Z"/></svg><span class="mono">POINTER DOCK <b>↗</b></span></button>
+      <div class="sector-label mono">指针港 <span>SECTOR 01</span><i></i><span id="world-state">状态 / 失序</span></div>
+      <div id="touch-controls"><div id="touch-stick" aria-label="移动摇杆"><div id="stick-knob"></div></div><div class="touch-right"><button id="touch-scan" aria-label="扫描">溯源</button><button id="touch-jump" aria-label="跳跃">↑</button></div></div>
+    </section>
+    <section id="patch-panel" hidden aria-label="因果织针工作台">
+      <div class="patch-header"><div class="eyebrow">CAUSAL NEEDLE <span>● BREAKPOINT</span></div><button id="btn-close-patch" class="close-button" aria-label="退出断点编辑">×</button></div>
+      <div class="patch-body"><span id="patch-code" class="mono">Q-01 / EVENT ORDER</span><h2 id="patch-title">先离开，再消失。</h2><p id="patch-description"></p><div id="patch-observation"></div><div id="patch-editor"></div><button id="btn-preview" class="preview-button">预演未来 <span>↗</span></button><button id="btn-verify" class="primary verify"><span>重放并验证 <kbd>R</kbd></span><span>→</span></button><button id="btn-undo" class="text-button">撤销草案 <span>↶</span></button><p class="patch-foot">局部时间已冻结。你可以安心思考。</p></div>
+    </section>
+    <div id="patch-nodes" hidden aria-label="三维车站因果节点"></div>
+    <section id="proof-panel" hidden aria-live="polite"><div class="proof-top"><span id="proof-label" class="mono">ASSERTION REPORT</span><button id="btn-close-proof" class="close-button" aria-label="收起验证报告">×</button></div><h3 id="proof-title"></h3><p id="proof-reason"></p><div id="proof-checks"></div><div id="proof-log" class="mono"></div><button id="btn-proof-action" class="text-button">继续实验 <span>→</span></button></section>
+    <div id="scan-banner" hidden><span class="mono">TRACE / 因果轨迹已展开</span><p id="scan-detail"></p></div>
+    <div id="toast" hidden role="status"></div>
+    <div id="subtitle" hidden><span id="speaker">MIRA</span><p id="subtitle-text"></p><button id="btn-dialogue">继续 <kbd>E</kbd> →</button></div>
+    <div id="cinema" hidden><div class="cinema-top mono"><span>WORLD REPLAY</span><span id="replay-id"></span></div><div class="cinema-bottom"><div class="eyebrow" id="cinema-label">REBUILDING CAUSALITY</div><h2 id="cinema-title">把被跳过的人，接回世界。</h2><p id="cinema-detail"></p><button id="btn-skip-replay" class="text-button">跳过镜头 <span>→</span></button></div></div>
+    <div id="modal-layer" hidden><section id="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="close-button modal-close" id="btn-close-modal" aria-label="关闭">×</button><div id="modal-content"></div></section></div>
+    <section id="result" hidden><div class="result-copy"><div class="eyebrow">CHAPTER 01 / RESTORED</div><div class="result-code">200 <span>OK</span></div><h2>系统找到了车站。<br>她找到了回家的路。</h2><p>你没有删除那个错误。<br>你听见了它想说的话。</p><div id="result-stats"></div><div class="result-actions"><button id="btn-roam" class="primary"><span>留在这座城市</span><span>↗</span></button><button id="btn-restart" class="text-button">重新修复 <span>↶</span></button></div><button id="btn-copy-result" class="text-button">复制本次修复记录 <span>↗</span></button><div class="next-chapter"><span class="mono">BEYOND THE DOCK</span><span>下一程：脉冲炉 <small>后续章节 · 尚未开放</small></span></div></div></section>
+    <div id="loading"><div class="loading-ring"></div><span class="mono">RE:FLOW 404</span><p>正在唤醒指针港…</p></div>
+    <div id="boot-error" hidden><h1>暂时无法唤醒城市。</h1><p id="boot-error-detail">请使用支持 WebGL 2 的现代浏览器，并开启硬件加速。</p><button onclick="location.reload()" class="primary">重新载入 →</button></div>
+    <div id="performance" hidden class="mono"></div>
+  </div>
+  <script type="module" src="/src/game/main.ts"></script>
+</body>
 </html>

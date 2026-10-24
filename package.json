@@ -1,9 +1,9 @@
 {
   "name": "reflow-404",
   "private": true,
-  "version": "1.0.0",
+  "version": "6.0.0",
   "type": "module",
-  "description": "RE:FLOW 404《别把我排版掉》——整张网页就是逃生地图：拖动真正的标题、按钮和卡片，改变排版，救出一个即将被删除的 404 小生命。",
+  "description": "RE:FLOW 404《断点之城》——探索三维故障港城，扫描事件、改写因果、重放验证，让被遗忘的车站重新回到世界。",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -11,9 +11,14 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@types/three": "^0.186.0",
     "playwright": "^1.64.1",
     "typescript": "5.6.3",
-    "vite": "5.4.11",
-    "vitest": "2.1.8"
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  },
+  "engines": { "node": ">=24.0.0" },
+  "dependencies": {
+    "three": "^0.186.1"
   }
 }
