@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#EEEAE1" />
+    <meta
+      name="description"
+      content="RE:FLOW 404《别把我排版掉》：整张网页就是逃生地图。拖动真正的标题、按钮和卡片改变排版，救出一个即将被删除的 404 小生命——你的每次编辑，都会成为它的救援乐句。"
+    />
+    <title>RE:FLOW 404 · 别把我排版掉</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23EEEAE1'/%3E%3Cpath d='M6 24V8h13l-4 5h9v11z' fill='%23141615'/%3E%3Ccircle cx='12' cy='15' r='1.8' fill='%23EEEAE1'/%3E%3Ccircle cx='18' cy='14' r='1.8' fill='%23EEEAE1'/%3E%3Crect x='9' y='24' width='3' height='4' fill='%23EE5337'/%3E%3Crect x='15' y='24' width='3' height='4' fill='%23EE5337'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <div id="app" data-testid="app">
+      <!-- ===== 暖纸杂志外壳 ===== -->
+      <header id="shell-header">
+        <div class="brand mono">RE:FLOW<b class="brand-404">404</b></div>
+        <div class="shell-mid mono">SYSTEM&nbsp;/&nbsp;HUMAN&nbsp;RESCUE</div>
+        <div class="shell-right">
+          <button class="shell-btn mono" id="btn-sound" data-testid="btn-sound" aria-pressed="false">
+            ♪ 开启声音
+          </button>
+          <button class="shell-btn mono" id="btn-vol" aria-label="音量">VOL</button>
+          <button class="shell-btn mono" id="btn-pause" data-testid="btn-pause" hidden>‖</button>
+        </div>
+      </header>
+
+      <div id="shell-body">
+        <!-- 左：品牌海报栏（首屏即操作入口，0 帧等待） -->
+        <aside id="brand-col" data-testid="brand-col">
+          <div class="poster-tag mono">THIS PAGE&nbsp;IS&nbsp;ALIVE.</div>
+          <h1 class="poster-title">
+            一次轻轻的修改，<br />
+            可以救下<br />
+            <span class="poster-404">4<span class="misreg">0</span>4</span>
+          </h1>
+          <p class="poster-sub">
+            它从错误日志里醒来，即将被系统删除。<br />
+            你是排版管理员：<b>拖动真正的网页标题、按钮、卡片</b>，为它排出一条生路。你的每次编辑，都会成为它的救援乐句。
+          </p>
+          <div class="poster-actions">
+            <button class="cta" id="btn-start" data-testid="btn-start">开始拯救&nbsp;↗</button>
+            <button class="cta ghost" id="btn-how">怎么救？</button>
+          </div>
+          <div class="poster-how mono" id="menu-how" hidden>
+            ① 点网页模块（或拖右上 ≡ 手柄）<br />
+            ② 选/拖到虚线锚点 · 拖动时世界 0.22× 慢放<br />
+            ③ 它自动向右跑 · 白色清理波在追<br />
+            ④ 开启声音：每次成功编辑，音乐加一声部<br />
+            <span class="kbd">SPACE</span> 暂停 · <span class="kbd">R</span> 重试 · <span class="kbd">M</span> 静音
+          </div>
+          <div class="poster-foot mono">
+            <span id="best-line"></span>
+            MOVE&nbsp;THE&nbsp;PAGE&nbsp;·&nbsp;SAVE&nbsp;THE&nbsp;LIFE
+          </div>
+        </aside>
+
+        <!-- 右：深墨交互舞台 -->
+        <main id="stage-wrap" data-testid="stage">
+          <div id="viewport">
+            <div id="world" data-testid="world">
+              <!-- 关卡内容由 DOMWorldBridge 注入（真实 h1/button/article） -->
+              <canvas id="fx" width="1200" height="620" data-testid="fx"></canvas>
+            </div>
+          </div>
+          <div id="stage-tip" class="mono" data-testid="stage-tip"></div>
+          <div id="drag-pill" class="mono" hidden>EDITING · 0.22×</div>
+          <div id="layout-ruler" class="mono" data-testid="layout-ruler" hidden>LAYOUT / REVISED</div>
+        </main>
+      </div>
+
+      <footer id="shell-footer">
+        <span class="mono" id="hud-stage" data-testid="hud-stage">STEP 01/03</span>
+        <div class="progress-line"><div id="progress-fill"></div></div>
+        <span class="mono" id="hud-goal" data-testid="hud-goal">拖动页面，改变命运</span>
+        <span class="mono hud-right">
+          <span id="hud-edits" data-testid="hud-edits">EDITS 00</span>
+          <span id="hud-time" data-testid="hud-time">00:00</span>
+          <button class="shell-btn mono" id="btn-layout" data-testid="btn-layout" hidden>
+            LAYOUT·GALLERY
+          </button>
+        </span>
+      </footer>
+
+      <!-- 音量弹层 -->
+      <div id="vol-pop" hidden data-testid="vol-pop">
+        <label class="mono">总音量 <input type="range" id="vol-master" min="0" max="100" value="65" /></label>
+        <label class="mono">音乐 <input type="range" id="vol-music" min="0" max="100" value="35" /></label>
+        <label class="mono">操作音效 <input type="range" id="vol-sfx" min="0" max="100" value="65" /></label>
+      </div>
+
+      <!-- ===== 结算演出层（固定视口，不随镜头） ===== -->
+      <div id="screen" data-testid="screen" hidden>
+        <div class="scr scr-end" id="scr-end">
+          <div class="cine-stage">
+            <div class="end-code" id="end-code" data-testid="end-code">404</div>
+            <div class="end-hero" id="end-hero" aria-hidden="true">
+              <svg viewBox="0 0 30 44" width="30" height="44">
+                <path d="M-15-42 L5-42 L15-32 L15-4 L-15-4 Z" fill="#F5F0E7" transform="translate(15 44)" />
+              </svg>
+            </div>
+          </div>
+          <div class="end-title" id="end-title">页面保住了</div>
+          <div class="end-stats mono" id="end-stats" data-testid="end-stats"></div>
+          <div class="end-actions">
+            <button class="cta" id="btn-retry" data-testid="btn-retry">再改写一次&nbsp;→</button>
+            <button class="cta ghost" id="btn-challenge" hidden>挑战更少编辑</button>
+            <button class="cta ghost" id="btn-replay-motif" hidden>♪ 再听一次我的页面</button>
+            <button class="cta ghost" id="btn-share" hidden>分享战绩</button>
+            <button class="cta ghost" id="btn-home" hidden>回到封面</button>
+          </div>
+          <button class="skip mono" id="btn-skip" hidden>跳过演出&nbsp;⏭</button>
+        </div>
+      </div>
+
+      <div id="pause-veil" hidden data-testid="pause-veil">
+        <div class="pause-card">
+          <div class="pause-title mono">PAUSED</div>
+          <p class="mono">追兵已冻结 · 点击画面或按 SPACE 继续</p>
+        </div>
+      </div>
+
+      <div id="boot-hint" role="status">
+        <span class="boot-fold"></span>
+        <p>正在排版这个世界…</p>
+        <p id="boot-error" hidden>加载失败，<a href="javascript:location.reload()">重试</a></p>
+      </div>
+      <noscript>
+        <p style="position: fixed; inset: 0; display: grid; place-items: center; color: #141615">
+          这只 404 需要 JavaScript 才能醒来。
+        </p>
+      </noscript>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

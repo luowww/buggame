@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 300" width="420" height="300">
+  <!-- 零四 Zero-Four · 角色设定图（程序化原创绘制，与游戏内 Canvas 渲染一致的剪影语言） -->
+  <rect width="420" height="300" rx="14" fill="#0C0E10"/>
+  <!-- 网格线背景 -->
+  <g stroke="rgba(244,240,231,0.06)" stroke-width="1">
+    <line x1="0" y1="75" x2="420" y2="75"/><line x1="0" y1="150" x2="420" y2="150"/><line x1="0" y1="225" x2="420" y2="225"/>
+    <line x1="105" y1="0" x2="105" y2="300"/><line x1="210" y1="0" x2="210" y2="300"/><line x1="315" y1="0" x2="315" y2="300"/>
+  </g>
+  <!-- 地面线 -->
+  <line x1="30" y1="238" x2="390" y2="238" stroke="rgba(244,240,231,0.28)" stroke-width="2"/>
+
+  <!-- 六状态动作条 -->
+  <!-- 1 idle：站立 -->
+  <g transform="translate(60 238)">
+    <rect x="-4" y="-12" width="6" height="12" fill="#FF684E"/>
+    <rect x="4" y="-12" width="6" height="12" fill="#FF684E"/>
+    <path d="M-15 -42 L5 -42 L15 -32 L15 -4 L-15 -4 Z" fill="#101216" stroke="rgba(244,240,231,0.55)" stroke-width="1.2"/>
+    <path d="M5 -42 L11 -34 L15 -32 Z" fill="rgba(244,240,231,0.16)"/>
+    <rect x="-10" y="-24" width="7" height="3.2" fill="#F4F0E7"/>
+    <rect x="2" y="-27" width="7" height="3.2" fill="#F4F0E7"/>
+    <rect x="-3" y="-12" width="6" height="2" fill="#FF684E"/>
+    <text x="0" y="16" font-family="monospace" font-size="9" fill="#8a867c" text-anchor="middle">idle</text>
+  </g>
+  <!-- 2 sprint：跑动（折角张开 + 腿摆开） -->
+  <g transform="translate(128 238)">
+    <rect x="-12" y="-12" width="6" height="12" fill="#FF684E"/>
+    <rect x="6" y="-9" width="6" height="9" fill="#FF684E"/>
+    <path d="M-15 -42 L2 -42 L15 -30 L15 -4 L-15 -4 Z" fill="#101216" stroke="rgba(244,240,231,0.55)" stroke-width="1.2"/>
+    <path d="M2 -42 L10 -32 L15 -30 Z" fill="rgba(244,240,231,0.16)"/>
+    <rect x="-10" y="-24" width="7" height="3.2" fill="#F4F0E7"/>
+    <rect x="2" y="-27" width="7" height="3.2" fill="#F4F0E7"/>
+    <!-- 速度线 -->
+    <line x1="-30" y1="-20" x2="-18" y2="-20" stroke="rgba(215,255,63,0.5)" stroke-width="2"/>
+    <line x1="-26" y1="-12" x2="-16" y2="-12" stroke="rgba(215,255,63,0.35)" stroke-width="2"/>
+    <text x="0" y="16" font-family="monospace" font-size="9" fill="#8a867c" text-anchor="middle">sprint</text>
+  </g>
+  <!-- 3 jump：跳起（收腿） -->
+  <g transform="translate(196 214)">
+    <rect x="-9" y="-14" width="6" height="9" fill="#FF684E"/>
+    <rect x="3" y="-14" width="6" height="9" fill="#FF684E"/>
+    <path d="M-15 -42 L4 -42 L15 -31 L15 -4 L-15 -4 Z" fill="#101216" stroke="rgba(244,240,231,0.55)" stroke-width="1.2"/>
+    <rect x="-10" y="-24" width="7" height="3.2" fill="#F4F0E7"/>
+    <rect x="2" y="-27" width="7" height="3.2" fill="#F4F0E7"/>
+    <text x="0" y="40" font-family="monospace" font-size="9" fill="#8a867c" text-anchor="middle">jump</text>
+  </g>
+  <!-- 4 falling：坠落（眼睛瞪大） -->
+  <g transform="translate(264 208)">
+    <rect x="-9" y="-10" width="6" height="7" fill="#FF684E"/>
+    <rect x="3" y="-10" width="6" height="7" fill="#FF684E"/>
+    <path d="M-15 -42 L4 -42 L15 -31 L15 -4 L-15 -4 Z" fill="#101216" stroke="rgba(244,240,231,0.55)" stroke-width="1.2"/>
+    <rect x="-10" y="-25" width="7" height="4.5" fill="#F4F0E7"/>
+    <rect x="2" y="-28" width="7" height="4.5" fill="#F4F0E7"/>
+    <text x="0" y="46" font-family="monospace" font-size="9" fill="#8a867c" text-anchor="middle">falling</text>
+  </g>
+  <!-- 5 relieved：得救（站在 SAFE 按钮上） -->
+  <g transform="translate(332 238)">
+    <rect x="0" y="-14" width="120" height="14" rx="7" fill="#D7FF3F"/>
+    <text x="60" y="-4" font-family="monospace" font-size="8" fill="#0C0E10" text-anchor="middle" font-weight="700">200 OK · SAVED</text>
+  </g>
+  <g transform="translate(360 224)">
+    <rect x="-4" y="-10" width="6" height="10" fill="#FF684E"/>
+    <rect x="4" y="-10" width="6" height="10" fill="#FF684E"/>
+    <path d="M-15 -40 L5 -40 L15 -30 L15 -2 L-15 -2 Z" fill="#101216" stroke="rgba(244,240,231,0.55)" stroke-width="1.2"/>
+    <rect x="-10" y="-22" width="7" height="3.2" fill="#F4F0E7"/>
+    <rect x="2" y="-25" width="7" height="3.2" fill="#F4F0E7"/>
+    <!-- 舒服的眯眼弧线 -->
+    <path d="M-10 -20 q3 2 7 0" stroke="#F4F0E7" stroke-width="1.5" fill="none"/>
+    <text x="0" y="16" font-family="monospace" font-size="9" fill="#D7FF3F" text-anchor="middle">relieved</text>
+  </g>
+  <!-- 6 startled：受惊（靠近清理波） -->
+  <g transform="translate(50 116)">
+    <text x="0" y="0" font-family="monospace" font-size="9" fill="#8a867c">startled · </text>
+    <rect x="52" y="-14" width="6" height="14" fill="#FF684E"/>
+    <rect x="60" y="-14" width="6" height="14" fill="#FF684E"/>
+    <path d="M37 -46 L57 -46 L67 -36 L67 -8 L37 -8 Z" fill="#101216" stroke="rgba(244,240,231,0.55)" stroke-width="1.2"/>
+    <rect x="42" y="-28" width="7" height="5" fill="#F4F0E7"/>
+    <rect x="54" y="-31" width="7" height="5" fill="#F4F0E7"/>
+    <!-- 惊叹号 -->
+    <text x="75" y="-40" font-family="monospace" font-size="16" fill="#FF684E" font-weight="700">!</text>
+    <!-- 汗滴 -->
+    <circle cx="70" cy="-50" r="2.6" fill="#FF684E"/>
+  </g>
+  <!-- 清理波提示 -->
+  <g transform="translate(230 96)">
+    <rect x="0" y="0" width="160" height="40" fill="rgba(244,240,231,0.10)"/>
+    <rect x="0" y="0" width="4" height="40" fill="#F4F0E7"/>
+    <text x="14" y="16" font-family="monospace" font-size="10" fill="rgba(244,240,231,0.8)">DELETE</text>
+    <text x="14" y="30" font-family="monospace" font-size="8" fill="rgba(244,240,231,0.4)">▌CLN-01</text>
+  </g>
+  <!-- 名字条 -->
+  <text x="210" y="284" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="13" fill="#F4F0E7" text-anchor="middle">零四 Zero-Four · 从 404 错误日志里醒来的折页角小生命</text>
+</svg>

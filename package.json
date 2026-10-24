@@ -1,0 +1,18 @@
+{
+  "name": "reflow-404",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "RE:FLOW 404《别把我排版掉》——整张网页就是逃生地图：拖动真正的标题、按钮和卡片，改变排版，救出一个即将被删除的 404 小生命。",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "5.6.3",
+    "vite": "5.4.11",
+    "vitest": "2.1.8"
+  }
+}
