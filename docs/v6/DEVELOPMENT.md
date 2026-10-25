@@ -131,6 +131,59 @@ npm run preview -- --host 127.0.0.1 --port 5387
 
 老项目主入口保留在 `legacy-v5.html`，代码仍在 `src/main.ts`、`src/v5/`，旧说明保留在 `docs/v6/LEGACY_V5_README.md`。正式首页改为 V6；正式构建只打包 V6。
 
+## 衍生仓库的发布门禁
+
+本仓库是 [qing1989620/game-1](https://github.com/qing1989620/game-1) 的衍生仓库，
+继承了该项目的全部源码、界面验收记录与审查报告。
+
+上游的 `scripts/check-release.mjs --strict` 用**源码指纹**把界面验收记录绑定到
+它审查过的那份源码。衍生仓库新增了引导功能，源码必然与上游不同，因此上游的
+严格检查**在原理上无法通过**。改写指纹来"让它变绿"等于伪造验收证据——那会让
+整个门禁失去意义。
+
+所以衍生仓库换用 `scripts/check-derivative-release.mjs`，做两件诚实的事：
+
+### 1. 上游证据的真实性（provenance）
+
+从**上游 commit 自己的文件树**重算上游的源码指纹，与继承下来的收据里封存的
+指纹逐位比对：
+
+```sh
+git ls-tree -r --name-only a8b36b0   # 文件清单取自上游 commit，不取工作区
+git show a8b36b0:<path>              # 内容也取自上游 commit
+```
+
+两者一致才说明继承来的 66 项界面验收记录确实是上游对那份源码做的，没有被
+修改过。任何对上游收据的改动都会让这一步失败。
+
+### 2. 衍生改动自身的证据（derivative）
+
+- 继承的上游收据仍记录 66 项全部通过、最终浏览器错误列表为空、审查报告状态为「通过」。
+- 本仓库自己的端到端收据（`artifacts/e2e-*-checks.json`）存在且全部通过。
+- `HEAD` 确实是上游已审查 commit `a8b36b0` 的后代。
+- 相对上游的**全部改动**（含未提交的工作区改动）都在声明清单内。
+- **游戏规则文件一个都没动**：`domain.ts`、`physics.ts`、`world.ts`、`view.ts`、
+  各城 chapter/domain、`style.css` 等一旦出现差异即失败。
+
+### 已实测能捕获的破坏
+
+| 破坏 | 结果 |
+| --- | --- |
+| 篡改上游收据的指纹 | `Inherited upstream evidence does not match the upstream commit` |
+| 篡改本仓库的端到端收据 | `artifacts/e2e-*-checks.json records a failed check` |
+| 改动游戏规则文件（已提交） | `Gameplay rule files were modified: ...` |
+| 改动游戏规则文件（未提交） | `Undeclared changes relative to upstream: ...` |
+
+### CI 的两个层次
+
+`.github/workflows/verify.yml` 的硬性门禁是 `npm run release:check`
+（= 上游的非严格检查 + 衍生门禁）。上游的严格封存检查保留为
+`npm run release:check:upstream`，在 CI 里以 `continue-on-error` 方式运行——
+它是**对照信号**，不是阻断项，因为它的失败是衍生仓库的固有属性而非缺陷。
+
+CI 需要 `fetch-depth: 0`：上游 commit 在本仓库历史中位于第 4 层之前，
+浅克隆拿不到它，衍生门禁就无法验证上游证据的真实性。
+
 ## 线上部署（Vercel）
 
 本项目由 **Vercel 托管**：任何进入 `main` 的改动都会触发一次自动构建与部署。仓库内没有 `vercel.json`，构建命令、输出目录与 Node 版本都配置在 Vercel 项目的设置里。

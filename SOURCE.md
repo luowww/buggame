@@ -31,6 +31,21 @@
 
 **未改动**任何玩法规则、领域模型、关卡内容或美术资产。`src/game/domain.ts`、`forge-domain.ts`、`thread-domain.ts`、`snow-domain.ts` 等权威模型保持原作原样。
 
+## 发布门禁的差异
+
+上游用源码指纹把界面验收记录绑定到它审查过的源码。本仓库新增了引导功能，
+源码必然与上游不同，因此上游的严格检查在原理上无法通过。
+
+本仓库**没有改写上游的指纹**，而是新增 `scripts/check-derivative-release.mjs`，
+它做两件事：
+
+1. 从上游 commit `a8b36b0` 自己的文件树重算上游指纹，与继承来的收据比对——
+   证明那 66 项验收记录确实是上游对那份源码做的，未被修改。
+2. 校验本仓库自己的端到端收据、祖先关系、声明的改动清单，并确认
+   **游戏规则文件一个都没动**。
+
+上游的 `scripts/check-release.mjs` 原样保留，未改动一行。
+
 ## 第三方依赖
 
 运行时与开发依赖的许可见 `public/THIRD_PARTY_NOTICES.txt`（three.js MIT、Vite MIT、Vitest MIT、TypeScript Apache-2.0、Playwright Apache-2.0）。运行时不调用任何网络 API 或云端模型。

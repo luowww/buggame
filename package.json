@@ -11,7 +11,8 @@
     "test": "vitest run",
     "verify": "npm test && npm run build && node scripts/check-release.mjs",
     "deploy:safety": "node scripts/check-deploy-safety.mjs",
-    "release:check": "npm run verify && node scripts/check-release.mjs --strict"
+    "release:check": "npm run verify && node scripts/check-derivative-release.mjs",
+    "release:check:upstream": "node scripts/check-release.mjs --strict"
   },
   "devDependencies": {
     "@types/three": "^0.186.0",

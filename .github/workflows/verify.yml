@@ -12,6 +12,9 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+          # The derivative gate proves upstream's evidence against the upstream
+          # commit's tree, so the reviewed upstream commit must be present.
+          fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -20,3 +23,9 @@ jobs:
       - run: npm run release:check
       - name: Deployment safety (Vercel)
         run: npm run deploy:safety
+      - name: Upstream strict seal (informational)
+        continue-on-error: true
+        run: |
+          echo "上游严格封存检查针对上游源码指纹设计，衍生仓库的源码必然不同。"
+          echo "此处保留运行仅为对照；实际门禁由 check-derivative-release.mjs 承担。"
+          npm run release:check:upstream
