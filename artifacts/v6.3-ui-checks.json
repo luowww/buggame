@@ -1,0 +1,358 @@
+{
+  "version": "6.3.0",
+  "date": "2026-10-25",
+  "method": "CUA normal production UI, no game state injection or development hooks",
+  "checks": [
+    {
+      "check": "V6.2 第三城通关存档迁移并正常进入第四城",
+      "passed": true,
+      "evidence": "第三城 4/4 + 2/2 保留，下一站按钮进入白噪雪原；第四城重载仍保留天气与入城阶段"
+    },
+    {
+      "check": "晴霁、降雪、暴风雪切换与避风区状态",
+      "passed": true,
+      "evidence": "三种按钮均正常切换；暴风雪中初始避风区风力受阻，角色可正常走到 KESTREL"
+    },
+    {
+      "check": "勘测册阶段门与未扫描站点接驳限制",
+      "passed": true,
+      "evidence": "初始只有 WF-02 可导航，未扫描站点不出现接驳"
+    },
+    {
+      "check": "驯风天线原始方案被三种天气反例拒绝",
+      "passed": true,
+      "evidence": "WF-02:30 / 完整验证\n↶ 发现反例\n\n晴霁：收到 4/20 帧；最低储能 10.0；断供 0 次；峰值应力 69.0/8\n\n× 晴霁\n晴霁：收到 4/20 帧；最低储能 10.0；断供 0 次；峰值应力 69.0/8\n× 降雪\n降雪：收到 4/20 帧；最低储能 10.0；断供 0 次；峰值应力 105.0/8\n× 暴风雪\n暴风雪：收到 3/20 帧；最低储能 10.0；断供 0 次；峰值应力 141.0/8"
+    },
+    {
+      "check": "只修复朝向和风闸，持续加热仍因断供失败",
+      "passed": true,
+      "evidence": "WF-02:31 / 完整验证\n↶ 发现反例\n\n晴霁：收到 30/20 帧；最低储能 0.0；断供 21 次；峰值应力 0.0/8\n\n× 晴霁\n晴霁：收到 30/20 帧；最低储能 0.0；断供 21 次；峰值应力 0.0/8\n× 降雪\n降雪：收到 30/20 帧；最低储能 0.0；断供 17 次；峰值应力 0.0/8\n× 暴风雪\n暴风雪：收到 24/20 帧；最低储能 0.0；断供 21 次；峰值应力 0.0/8"
+    },
+    {
+      "check": "三天气预演通过，可切换暴风雪情景并单步",
+      "passed": true,
+      "evidence": "WF-02:preview / 预演 · 尚未提交\n✓ 通过回归\n\n三种天气都能保住天线、电源与接收窗口。\n\n✓ 晴霁\n晴霁：收到 30/20 帧；最低储能 10.0；断供 0 次；峰值应力 0.0/8\n✓ 降雪\n降雪：收到 30/20 帧；最低储能 10.0；断供 0 次；峰值应力 0.0/8\n✓ 暴风雪\n暴风雪：收到 24/20 帧；最低储能 10.0；断供 0 次；峰值应力 0.0/8"
+    },
+    {
+      "check": "预演不提交，关闭后恢复已提交草案与当前关卡",
+      "passed": true,
+      "evidence": "预演通过后仍为 WF-02；重新打开恢复 fixed/open/14/off"
+    },
+    {
+      "check": "滑杆内 Tab 焦点与原生控件 Escape 退出",
+      "passed": true,
+      "evidence": {
+        "focused": "snow-control-heater"
+      }
+    },
+    {
+      "check": "驯风天线正式提交后开放第二主线",
+      "passed": true,
+      "evidence": "当前主线 NET-01，天线通过三天气回归后桥面展开"
+    },
+    {
+      "check": "第一座冰桥实走与扫描站点检查点续玩",
+      "passed": true,
+      "evidence": "正常横穿约100米；扫描后重载回到 NET-01，主线1/5保留"
+    },
+    {
+      "check": "默认路由环受 TTL 限制但无法交付",
+      "passed": true,
+      "evidence": "NET-01:33 / 完整验证\n↶ 发现反例\n\n晴霁：A → B → C → A；TTL=1，A 不能继续转发；目的地尚未到达\n\n× 晴霁\n晴霁：A → B → C → A；TTL=1，A 不能继续转发；目的地尚未到达\n× 降雪\n降雪：A → B → C → A；TTL=1，A 不能继续转发；目的地尚未到达\n× 暴风雪\n暴风雪：A → B → C → A；TTL=1，A 不能继续转发；目的地尚未到达"
+    },
+    {
+      "check": "晴天与降雪通过的短 TTL 在暴风绕行中失败",
+      "passed": true,
+      "evidence": "NET-01:34 / 完整验证\n↶ 发现反例\n\n暴风雪：A → B → C → E；TTL=1，E 不能继续转发；目的地尚未到达\n\n✓ 晴霁\n晴霁：A → C → E → D；目的地已收到\n✓ 降雪\n降雪：A → C → E → D；目的地已收到\n× 暴风雪\n暴风雪：A → B → C → E；TTL=1，E 不能继续转发；目的地尚未到达"
+    },
+    {
+      "check": "首选 A→C 的替代路由在暴风备路与 TTL=4 下通过",
+      "passed": true,
+      "evidence": "NET-01:preview / 预演 · 尚未提交\n✓ 通过回归\n\n绕过断链和环路，三种天气均将消息送到 D。\n\n✓ 晴霁\n晴霁：A → C → E → D；目的地已收到\n✓ 降雪\n降雪：A → C → E → D；目的地已收到\n✓ 暴风雪\n暴风雪：A → B → C → E → D；目的地已收到"
+    },
+    {
+      "check": "第二主线提交后只开放已满足前提的支线",
+      "passed": true,
+      "evidence": "NET-S1 开放，NET-S2 与 NET-S3 仍未开放"
+    },
+    {
+      "check": "地址支线拒绝仍会回应的过期服务",
+      "passed": true,
+      "evidence": "NET-S1:36 / 完整验证\n↶ 发现反例\n\n查询时间 14；选中 R1；需要第 2 代服务；存活探测关闭\n\n✓ 缓存仍有效\n查询时间 3；选中 R1；需要第 1 代服务；存活探测关闭\n× 旧地址仍回应\n查询时间 14；选中 R1；需要第 2 代服务；存活探测关闭\n× 新站点失联\n查询时间 23；选中 R1；需要第 2 代服务；存活探测关闭"
+    },
+    {
+      "check": "刷新并探活仍不能替代缓存有效期校验",
+      "passed": true,
+      "evidence": "NET-S1:37 / 完整验证\n↶ 发现反例\n\n查询时间 14；选中 R1；需要第 2 代服务；存活探测开启\n\n✓ 缓存仍有效\n查询时间 3；选中 R1；需要第 1 代服务；存活探测开启\n× 旧地址仍回应\n查询时间 14；选中 R1；需要第 2 代服务；存活探测开启\n× 新站点失联\n查询时间 23；选中 R1；需要第 2 代服务；存活探测开启"
+    },
+    {
+      "check": "地址记录、有效期与健康备站组合通过",
+      "passed": true,
+      "evidence": "NET-S1:preview / 预演 · 尚未提交\n✓ 通过回归\n\n刷新权威记录、尊重缓存有效期，再选择健康的候选站点。\n\n✓ 缓存仍有效\n查询时间 3；选中 R1；需要第 1 代服务；存活探测开启\n✓ 旧地址仍回应\n查询时间 14；选中 R2；需要第 2 代服务；存活探测开启\n✓ 新站点失联\n查询时间 23；选中 R3；需要第 2 代服务；存活探测开启"
+    },
+    {
+      "check": "地址支线完成不推进主线",
+      "passed": true,
+      "evidence": "主线2/5，支线1/3"
+    },
+    {
+      "check": "扫描站点接驳保留主线目标与支线记录",
+      "passed": true,
+      "evidence": "接驳回 NET-01，未跳过未扫描的 NET-02"
+    },
+    {
+      "check": "邮局原始方案在丢包或丢确认时无法完成",
+      "passed": true,
+      "evidence": "NET-02:41 / 完整验证\n↶ 发现反例\n\n降雪：4 个数据副本；2/4 已确认；四封逻辑信各执行一次\n\n✓ 晴霁\n晴霁：4 个数据副本；4/4 已确认；四封逻辑信各执行一次\n× 降雪\n降雪：4 个数据副本；2/4 已确认；四封逻辑信各执行一次\n× 暴风雪\n暴风雪：2 个数据副本；0/4 已确认；AM:2 未交付；PM:2 未交付"
+    },
+    {
+      "check": "只开重传仍会导致同一逻辑信重复执行",
+      "passed": true,
+      "evidence": "NET-02:42 / 完整验证\n↶ 发现反例\n\n降雪：6 个数据副本；4/4 已确认；AM:1 重复执行 2 次；PM:1 重复执行 2 次\n\n✓ 晴霁\n晴霁：4 个数据副本；4/4 已确认；四封逻辑信各执行一次\n× 降雪\n降雪：6 个数据副本；4/4 已确认；AM:1 重复执行 2 次；PM:1 重复执行 2 次\n× 暴风雪\n暴风雪：6 个数据副本；4/4 已确认；AM:1 重复执行 2 次；PM:1 重复执行 2 次"
+    },
+    {
+      "check": "按正文去重会误合并内容相同的两封独立信",
+      "passed": true,
+      "evidence": "NET-02:43 / 完整验证\n↶ 发现反例\n\n晴霁：4 个数据副本；4/4 已确认；AM:2 未交付\n\n× 晴霁\n晴霁：4 个数据副本；4/4 已确认；AM:2 未交付\n× 降雪\n降雪：6 个数据副本；4/4 已确认；AM:2 未交付\n× 暴风雪\n暴风雪：6 个数据副本；4/4 已确认；AM:2 未交付"
+    },
+    {
+      "check": "仅序号去重会丢掉下午会话的同序号信",
+      "passed": true,
+      "evidence": "NET-02:44 / 完整验证\n↶ 发现反例\n\n晴霁：4 个数据副本；4/4 已确认；PM:1 未交付；PM:2 未交付\n\n× 晴霁\n晴霁：4 个数据副本；4/4 已确认；PM:1 未交付；PM:2 未交付\n× 降雪\n降雪：6 个数据副本；4/4 已确认；PM:1 未交付；PM:2 未交付\n× 暴风雪\n暴风雪：6 个数据副本；4/4 已确认；PM:1 未交付；PM:2 未交付"
+    },
+    {
+      "check": "去重正确但重复包不回 ACK 时发送方仍无法收尾",
+      "passed": true,
+      "evidence": "NET-02:45 / 完整验证\n↶ 发现反例\n\n降雪：10 个数据副本；2/4 已确认；四封逻辑信各执行一次\n\n✓ 晴霁\n晴霁：4 个数据副本；4/4 已确认；四封逻辑信各执行一次\n× 降雪\n降雪：10 个数据副本；2/4 已确认；四封逻辑信各执行一次\n× 暴风雪\n暴风雪：10 个数据副本；2/4 已确认；四封逻辑信各执行一次"
+    },
+    {
+      "check": "会话序号、重传和重复 ACK 组合完整通过",
+      "passed": true,
+      "evidence": "NET-02:preview / 预演 · 尚未提交\n✓ 通过回归\n\n保留重传，用会话与序号识别消息，重复包也返回确认。\n\n✓ 晴霁\n晴霁：4 个数据副本；4/4 已确认；四封逻辑信各执行一次\n✓ 降雪\n降雪：6 个数据副本；4/4 已确认；四封逻辑信各执行一次\n✓ 暴风雪\n暴风雪：6 个数据副本；4/4 已确认；四封逻辑信各执行一次"
+    },
+    {
+      "check": "不校验时损坏数据不能通过",
+      "passed": true,
+      "evidence": "NET-S2:47 / 完整验证\n↶ 发现反例\n\n损坏数据被接受，或检测后没有恢复交付\n\n✓ 损坏样本 1\n只交付原始数据\n× 损坏样本 2\n损坏数据被接受，或检测后没有恢复交付\n× 损坏样本 3\n损坏数据被接受，或检测后没有恢复交付\n× 损坏样本 4\n损坏数据被接受，或检测后没有恢复交付"
+    },
+    {
+      "check": "字节求和无法识别一增一减的平衡损坏",
+      "passed": true,
+      "evidence": "NET-S2:48 / 完整验证\n↶ 发现反例\n\n损坏数据被接受，或检测后没有恢复交付\n\n✓ 损坏样本 1\n只交付原始数据\n✓ 损坏样本 2\n只交付原始数据\n× 损坏样本 3\n损坏数据被接受，或检测后没有恢复交付\n✓ 损坏样本 4\n只交付原始数据"
+    },
+    {
+      "check": "发现损坏但不重发仍会缺失交付",
+      "passed": true,
+      "evidence": "NET-S2:49 / 完整验证\n↶ 发现反例\n\n损坏数据被接受，或检测后没有恢复交付\n\n✓ 损坏样本 1\n只交付原始数据\n× 损坏样本 2\n损坏数据被接受，或检测后没有恢复交付\n× 损坏样本 3\n损坏数据被接受，或检测后没有恢复交付\n× 损坏样本 4\n损坏数据被接受，或检测后没有恢复交付"
+    },
+    {
+      "check": "CRC-8 检测与请求重传覆盖四个样本",
+      "passed": true,
+      "evidence": "NET-S2:preview / 预演 · 尚未提交\n✓ 通过回归\n\nCRC-8 识别本关的位错误，坏副本被丢弃并重传。\n\n✓ 损坏样本 1\n只交付原始数据\n✓ 损坏样本 2\n只交付原始数据\n✓ 损坏样本 3\n只交付原始数据\n✓ 损坏样本 4\n只交付原始数据"
+    },
+    {
+      "check": "实际冰桥横风：按住 F 显著减少静止角色被吹移",
+      "passed": true,
+      "evidence": {
+        "before": {
+          "x": -25.834652378044243,
+          "z": -36.50732282575753
+        },
+        "afterBraced": {
+          "x": -25.530529844057995,
+          "z": -36.31555453816261
+        },
+        "afterUnbraced": {
+          "x": -21.107943039679633,
+          "z": -34.179892876581114
+        },
+        "bracedMetres": 0.35953524417684585,
+        "unbracedMetres": 4.911244727664326
+      }
+    },
+    {
+      "check": "风雪实测后可由暂停菜单返回已获得的避风检查点",
+      "passed": true,
+      "evidence": "返回已扫描邮局，主线3/5、支线2/3保留"
+    },
+    {
+      "check": "拥塞风墙拒绝持续使用大窗口的方案",
+      "passed": true,
+      "evidence": "NET-03:51 / 完整验证\n↶ 发现反例\n\n晴霁：48/48 送达；丢弃 96/18；耗时 26/76 周期\n\n× 晴霁\n晴霁：48/48 送达；丢弃 96/18；耗时 26/76 周期\n× 降雪\n降雪：48/48 送达；丢弃 121/18；耗时 45/76 周期\n× 暴风雪\n暴风雪：48/48 送达；丢弃 141/18；耗时 68/76 周期"
+    },
+    {
+      "check": "最小窗口虽不丢包但无法按时送达",
+      "passed": true,
+      "evidence": "NET-03:52 / 完整验证\n↶ 发现反例\n\n晴霁：40/48 送达；丢弃 0/18；耗时 80/76 周期\n\n× 晴霁\n晴霁：40/48 送达；丢弃 0/18；耗时 80/76 周期\n× 降雪\n降雪：31/48 送达；丢弃 0/18；耗时 93/76 周期\n× 暴风雪\n暴风雪：23/48 送达；丢弃 0/18；耗时 92/76 周期"
+    },
+    {
+      "check": "自适应窗口的达标替代策略同样按计算结果认可",
+      "passed": true,
+      "evidence": "上限12、自适应开启、不退避：三种负载仍满足既定预算"
+    },
+    {
+      "check": "窗口上限12、自适应与退避组合通过全部负载",
+      "passed": true,
+      "evidence": "NET-03:preview / 预演 · 尚未提交\n✓ 通过回归\n\n窗口随拥塞收缩，给链路恢复空间，三种负载均按预算送达。\n\n✓ 晴霁\n晴霁：48/48 送达；丢弃 11/18；耗时 32/76 周期\n✓ 降雪\n降雪：48/48 送达；丢弃 15/18；耗时 55/76 周期\n✓ 暴风雪\n暴风雪：48/48 送达；丢弃 17/18；耗时 74/76 周期"
+    },
+    {
+      "check": "主暂停菜单冻结正在自动播放的设备回放",
+      "passed": true,
+      "evidence": {
+        "before": "NET-03:preview / 1 OF 12",
+        "after": "NET-03:preview / 1 OF 12"
+      }
+    },
+    {
+      "check": "恢复后继续同一次回放而非重新开始",
+      "passed": true,
+      "evidence": {
+        "paused": "NET-03:preview / 1 OF 12",
+        "resumed": "NET-03:preview / 12 OF 12"
+      }
+    },
+    {
+      "check": "四条主线与两条支线重载续玩",
+      "passed": true,
+      "evidence": "NET-04 待修复，未完成的草案没有混入存档"
+    },
+    {
+      "check": "四塔按到达顺序提交会破坏因果与一致性",
+      "passed": true,
+      "evidence": "NET-04:54 / 完整验证\n↶ 发现反例\n\nC1 → B1 → A1 → A3 → A2 → B2；出现后果早于前因；各塔提交顺序不同\n\n× 塔 1\nC1 → B1 → A1 → A3 → A2 → B2；出现后果早于前因；各塔提交顺序不同\n× 塔 2\nB1 → A1 → A2 → B2 → C1 → A3；出现后果早于前因；各塔提交顺序不同\n× 塔 3\nA3 → A2 → A1 → C1 → B2 → B1；出现后果早于前因；各塔提交顺序不同\n× 塔 4\nA1 → A2 → B1 → C1 → A3 → B2；出现后果早于前因；各塔提交顺序不同"
+    },
+    {
+      "check": "收齐消息但使用错开的墙钟仍破坏因果",
+      "passed": true,
+      "evidence": "NET-04:55 / 完整验证\n↶ 发现反例\n\nB1 → B2 → C1 → A1 → A2 → A3；出现后果早于前因；四塔一致\n\n× 塔 1\nB1 → B2 → C1 → A1 → A2 → A3；出现后果早于前因；四塔一致\n× 塔 2\nB1 → B2 → C1 → A1 → A2 → A3；出现后果早于前因；四塔一致\n× 塔 3\nB1 → B2 → C1 → A1 → A2 → A3；出现后果早于前因；四塔一致\n× 塔 4\nB1 → B2 → C1 → A1 → A2 → A3；出现后果早于前因；四塔一致"
+    },
+    {
+      "check": "逻辑时间仍需共同的平局规则",
+      "passed": true,
+      "evidence": "NET-04:56 / 完整验证\n↶ 发现反例\n\nB1 → A1 → A2 → C1 → B2 → A3；前因先于后果；各塔提交顺序不同\n\n× 塔 1\nB1 → A1 → A2 → C1 → B2 → A3；前因先于后果；各塔提交顺序不同\n× 塔 2\nB1 → A1 → A2 → C1 → B2 → A3；前因先于后果；各塔提交顺序不同\n× 塔 3\nA1 → B1 → A2 → C1 → B2 → A3；前因先于后果；各塔提交顺序不同\n× 塔 4\nA1 → B1 → A2 → C1 → B2 → A3；前因先于后果；各塔提交顺序不同"
+    },
+    {
+      "check": "已知批次屏障、逻辑时间和节点编号建立四塔一致顺序",
+      "passed": true,
+      "evidence": "NET-04:preview / 预演 · 尚未提交\n✓ 通过回归\n\n等本轮六条消息收齐，以逻辑时间和节点编号建立同一提交顺序。\n\n✓ 塔 1\nA1 → B1 → A2 → C1 → B2 → A3；前因先于后果；四塔一致\n✓ 塔 2\nA1 → B1 → A2 → C1 → B2 → A3；前因先于后果；四塔一致\n✓ 塔 3\nA1 → B1 → A2 → C1 → B2 → A3；前因先于后果；四塔一致\n✓ 塔 4\nA1 → B1 → A2 → C1 → B2 → A3；前因先于后果；四塔一致"
+    },
+    {
+      "check": "五系统综合回归之后才开启最后投递与强制暴风",
+      "passed": true,
+      "evidence": "五条主线全部通过，最后投递0/3，天气锁定暴风雪"
+    },
+    {
+      "check": "快捷键 T 也不能绕过终局天气条件",
+      "passed": true,
+      "evidence": "按钮禁用之外，快捷键也保持暴风条件"
+    },
+    {
+      "check": "实际穿过第一段风暴并交接到避风站",
+      "passed": true,
+      "evidence": "按真实移动到站、E交接，已保存第一站"
+    },
+    {
+      "check": "风暴中途重载从已交接站继续",
+      "passed": true,
+      "evidence": "第一站记录保留，暴风仍锁定，恢复位置在第一站避风区"
+    },
+    {
+      "check": "风暴投递期间已扫描站点接驳也停运",
+      "passed": true,
+      "evidence": {
+        "allDisabled": true,
+        "count": 7
+      }
+    },
+    {
+      "check": "第二段横穿冰峡谷并实际交接完成",
+      "passed": true,
+      "evidence": "第二站已保存，交接后对齐安全平台"
+    },
+    {
+      "check": "五主线与三次真实风暴交接后主线结算",
+      "passed": true,
+      "evidence": "CHAPTER 04 / PACKET RAIN\n200 OK\n穿过风雪，\n你的声音已抵达。\n\n五条主线与三次交接已经完成。雪原还留着 1 段支线故事，勘测册会为你保留它们的位置。\n\n5 / 5\n主线修复\n2 / 3\n支线故事\n3 / 3\n风暴交接\n留在雪原，看一场极光 ↗\n打开勘测册 · 补齐故事 →\n再次穿越风暴 ↗\n乘雪地车返回千线程 →\n重新修复第四城 ↶\n04 / 08 城市已开放\n下一程 · 镜库城 / 规划中"
+    },
+    {
+      "check": "通关后可自由切换天气",
+      "passed": true,
+      "evidence": "完成后解除天气限制，已转为晴霁"
+    },
+    {
+      "check": "心跳支线同时揭示误接管、过早恢复与旧权限写入",
+      "passed": true,
+      "evidence": "NET-S3:59 / 完整验证\n↶ 发现反例\n\n两次短暂丢失触发 1 次接管\n\n× 短暂风墙不误切\n两次短暂丢失触发 1 次接管\n✓ 真正失联及时接管\n首个接管时刻 8，要求 8–12\n× 恢复需要连续证据\n恢复时刻 20，单次恢复信号不应回切\n× 旧权限不能写入\n旧主站的延迟写入必须被当前 epoch 拒绝"
+    },
+    {
+      "check": "有接管阈值与代次栅栏仍需连续恢复证据",
+      "passed": true,
+      "evidence": "NET-S3:60 / 完整验证\n↶ 发现反例\n\n恢复时刻 20，单次恢复信号不应回切\n\n✓ 短暂风墙不误切\n两次短暂丢失触发 0 次接管\n✓ 真正失联及时接管\n首个接管时刻 10，要求 8–12\n× 恢复需要连续证据\n恢复时刻 20，单次恢复信号不应回切\n✓ 旧权限不能写入\n旧主站的延迟写入必须被当前 epoch 拒绝"
+    },
+    {
+      "check": "缺失3、恢复2与代次栅栏组合通过全部心跳情景",
+      "passed": true,
+      "evidence": "NET-S3:preview / 预演 · 尚未提交\n✓ 通过回归\n\n等待足够的心跳证据，用代次栅栏拒绝旧主站写入。\n\n✓ 短暂风墙不误切\n两次短暂丢失触发 0 次接管\n✓ 真正失联及时接管\n首个接管时刻 10，要求 8–12\n✓ 恢复需要连续证据\n恢复时刻 23，单次恢复信号不应回切\n✓ 旧权限不能写入\n旧主站的延迟写入必须被当前 epoch 拒绝"
+    },
+    {
+      "check": "主线通关后补齐第三支线，保留完整结算阶段",
+      "passed": true,
+      "evidence": "五主线、三支线、三交接均保留"
+    },
+    {
+      "check": "Post-ending all-eight result and free weather",
+      "passed": true,
+      "evidence": "Normal ending shows 5/5 main, 3/3 side, 3/3 storm handoffs; after completing NET-S3 the ending text includes all eight facilities. Weather can be changed again after completion."
+    },
+    {
+      "check": "Mobile workbench native controls and fixed validation footer",
+      "passed": true,
+      "evidence": "390×844 viewport: congestion slider and both checkbox states accept native input; preview reports calm/snow/whiteout budget results; scrollable editor retains close and full validation buttons; page has no horizontal overflow."
+    },
+    {
+      "check": "Mobile joystick plus bracing toggle in blizzard",
+      "passed": true,
+      "evidence": "390×844: tapped actual F/稳身 button to on, held native pointer on top of joystick 650 ms; visible minimap moved north from (105,-34) and bracing remained enabled. Revalidated existing NET-03 success without losing 8/8 completion."
+    },
+    {
+      "check": "Mobile survey readability and 44px actions",
+      "passed": true,
+      "evidence": "Final 390×844 build: single-column12px story text;299×290px SVG with widened viewBox and staggered side labels, no clipped rightmost NET-S3 label; all16 station actions44px high and close44×44px; scrolled to footer with sticky close; no horizontal overflow. Rechecked desktop survey and full ending after reload."
+    },
+    {
+      "check": "Mobile complete result scroll and controls",
+      "passed": true,
+      "evidence": "390×844 result retains 5/5,3/3,3/3, all ending/revisit/replay controls scroll into view; secondary actions each44px high, no horizontal overflow; completed checkpoint restores final observatory."
+    },
+    {
+      "check": "Third-city replay preserves fourth-city certificate and progress",
+      "passed": true,
+      "evidence": "Used completed third-city result → 重新修复第三城 (now0/6) → city map, fourth remained enabled. Entered fourth, reloaded origin and continued normally: 5/5 main,3/3 side,3/3 handoffs retained. No save injection or runtime mutation."
+    },
+    {
+      "check": "Snow low quality and reduced motion settings",
+      "passed": true,
+      "evidence": "Normal preferences set LOW + reduced motion and applied in blizzard without blocking controls; reopened preferences preserve selected values. Sound remains default off. This is a browser functional check, not device performance certification."
+    },
+    {
+      "check": "Four-city round trip and independent weather UI",
+      "passed": true,
+      "evidence": "Normal city map travelled snow→dock→forge→thread→snow. Dock retains complete state; replaying forge and thread retain valid onward certificates. Old cities restore sun/rain, snow restores its three weather controls and all8/3posts complete. Old-city puzzles are covered by automated regressions and previous-version manual reports, not re-solved in this run."
+    }
+  ],
+  "finalConsoleErrors": [],
+  "environment": {
+    "os": "Windows",
+    "browser": "Codex in-app Chromium",
+    "desktop": "1280×720",
+    "mobileViewport": "390×844",
+    "input": "native keyboard, pointer and DOM locators; no injected progress or runtime state",
+    "phoneHardwareTested": false
+  },
+  "sourceFingerprint": "71fabf1205953386f015e690624d6891567ea8b5c0882c9ae53ff2414d1cf869",
+  "review": "docs/v6/SNOW_REVIEW.md",
+  "buildAssets": [
+    "assets/index-DJaaNEuI.js",
+    "assets/index-YMtDktLQ.css"
+  ]
+}

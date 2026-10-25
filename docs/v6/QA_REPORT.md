@@ -1,6 +1,6 @@
 # V6 指针港 · 验收记录
 
-> 本文保留 V6.0 首城的历史基线。当前 V6.2 开放三城、95 项自动化测试，新增验收与限制见 [THREAD_REVIEW.md](THREAD_REVIEW.md)；第二城历史记录见 [FORGE_QA.md](FORGE_QA.md)。
+> 本文保留 V6.0 首城的历史基线。当前 V6.3 开放四城、157 项自动化测试，新增验收与限制见 [SNOW_REVIEW.md](SNOW_REVIEW.md)；第二、三城历史记录见 [FORGE_QA.md](FORGE_QA.md)、[THREAD_REVIEW.md](THREAD_REVIEW.md)。
 
 日期：2026-10-24，Asia/Shanghai。环境：Windows、本机 Node.js v24.15.0、Chromium 系的 Codex 内置浏览器。本报告区分自动逻辑测试和通过浏览器工具执行的界面验收。
 

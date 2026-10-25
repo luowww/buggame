@@ -1,5 +1,6 @@
 import { freshForge, parseForge, type ForgeProgress, type Weather } from './forge-domain';
 import { freshThread, parseThread, type ThreadProgress } from './thread-domain';
+import { freshSnow, parseSnow, type SnowProgress } from './snow-domain';
 /** V6 authority. All experiments are isolated snapshots; only proven results commit. */
 export type Station = 'A' | 'B' | 'C' | 'END';
 export type EventAction = 'EXIT' | 'DELETE' | 'ARCHIVE';
@@ -90,11 +91,13 @@ export function runOrder(order: readonly EventAction[], runId = 'Q-01:observe'):
 export type Chapter = 'meet' | 'reorder' | 'rail' | 'board' | 'complete';
 export interface Progress {
   version: 6;
-  city: 'dock' | 'forge' | 'thread';
+  city: 'dock' | 'forge' | 'thread' | 'snow';
   weather: Weather;
   forge: ForgeProgress;
   forgeClearance: ForgeProgress | null;
   thread: ThreadProgress;
+  threadClearance: ThreadProgress | null;
+  snow: SnowProgress;
   chapter: Chapter;
   elapsed: number;
   attempts: number;
@@ -103,7 +106,7 @@ export interface Progress {
   rail: RailState;
   evidence: string[];
 }
-export const freshProgress = (): Progress => ({ version: 6, city: 'dock', weather: 'rain', forge: freshForge(), forgeClearance:null, thread: freshThread(), chapter: 'meet', elapsed: 0, attempts: 0,
+export const freshProgress = (): Progress => ({ version: 6, city: 'dock', weather: 'rain', forge: freshForge(), forgeClearance:null, thread: freshThread(), threadClearance:null, snow:freshSnow(), chapter: 'meet', elapsed: 0, attempts: 0,
   counterexamples: 0, order: [...INITIAL_ORDER], rail: structuredClone(INITIAL_RAIL), evidence: [] });
 export const CHAPTERS: Chapter[] = ['meet', 'reorder', 'rail', 'board', 'complete'];
 
@@ -151,12 +154,16 @@ export function parseProgress(raw: unknown): Progress | null {
   const p = raw as Progress;
   const forge = parseForge(p.forge);
   const thread = parseThread(p.thread);
+  const snow = parseSnow(p.snow);
   const forgeClearance=p.forgeClearance===undefined?(forge?.phase==='complete'?structuredClone(forge):null):p.forgeClearance===null?null:parseForge(p.forgeClearance);
+  const threadClearance=p.threadClearance===undefined?(thread?.phase==='complete'?structuredClone(thread):null):p.threadClearance===null?null:parseThread(p.threadClearance);
   if((p.forgeClearance!=null&&!forgeClearance)||(forgeClearance&&forgeClearance.phase!=='complete'))return null;
-  if (!forge || !thread || (p.city !== undefined && !['dock','forge','thread'].includes(p.city)) ||
+  if((p.threadClearance!=null&&!threadClearance)||(threadClearance&&threadClearance.phase!=='complete'))return null;
+  if (!forge || !thread || !snow || (p.city !== undefined && !['dock','forge','thread','snow'].includes(p.city)) ||
     (p.weather !== undefined && p.weather !== 'rain' && p.weather !== 'clear') ||
-    ((p.city === 'forge' || p.city === 'thread' || forge.phase !== 'arrival' || forgeClearance!==null) && p.chapter !== 'complete') ||
-    ((p.city === 'thread' || thread.phase !== 'arrival') && forge.phase !== 'complete' && !forgeClearance)) return null;
+    ((p.city === 'forge' || p.city === 'thread' || p.city === 'snow' || forge.phase !== 'arrival' || forgeClearance!==null || threadClearance!==null || snow.phase!=='arrival') && p.chapter !== 'complete') ||
+    ((p.city === 'thread' || p.city === 'snow' || thread.phase !== 'arrival' || threadClearance!==null || snow.phase!=='arrival') && forge.phase !== 'complete' && !forgeClearance) ||
+    ((p.city === 'snow' || snow.phase!=='arrival') && thread.phase!=='complete' && !threadClearance)) return null;
   if (p.version !== 6 || !CHAPTERS.includes(p.chapter) || !Number.isFinite(p.elapsed) || p.elapsed < 0 ||
     !Number.isInteger(p.attempts) || p.attempts < 0 || !Number.isInteger(p.counterexamples) || p.counterexamples < 0 ||
     !Array.isArray(p.evidence) || p.evidence.some(e => !['Q-01', 'DS-01'].includes(e)) || !Array.isArray(p.order)) return null;
@@ -167,7 +174,7 @@ export function parseProgress(raw: unknown): Progress | null {
   if (CHAPTERS.indexOf(p.chapter) >= 2 && (!runOrder(p.order).passed || !p.evidence.includes('Q-01'))) return null;
   if (CHAPTERS.indexOf(p.chapter) >= 3 && (!runRail(p.rail).passed || !p.evidence.includes('DS-01'))) return null;
   // Reconstruct known fields, so prototypes and unrelated data never reach the engine.
-  return { version: 6, city: p.city ?? 'dock', weather: p.weather ?? 'rain', forge, forgeClearance, thread, chapter: p.chapter, elapsed: p.elapsed, attempts: p.attempts, counterexamples: p.counterexamples,
+  return { version: 6, city: p.city ?? 'dock', weather: p.weather ?? 'rain', forge, forgeClearance, thread, threadClearance, snow, chapter: p.chapter, elapsed: p.elapsed, attempts: p.attempts, counterexamples: p.counterexamples,
     order: [...p.order], evidence: [...p.evidence], rail: { head: 'A', next: { ...p.rail.next } } };
 }
 export function readProgress(): Progress | null {

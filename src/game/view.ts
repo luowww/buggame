@@ -6,8 +6,9 @@ import { PulseWorld } from './pulse-world';
 import { WeatherRig } from './weather';
 import type { Weather } from './forge-domain';
 import { ThreadWorld } from './thread-world';
+import { SnowWorld } from './snow-world';
 
-export type ViewMode = 'menu' | 'follow' | 'order' | 'rail' | 'recovery' | 'ride' | 'result' | 'forge-arrival' | 'forge-power' | 'forge-alu' | 'forge-rise' | 'forge-result' | 'thread-arrival' | 'thread-device' | 'thread-audit' | 'thread-ride' | 'thread-result';
+export type ViewMode = 'menu' | 'follow' | 'order' | 'rail' | 'recovery' | 'ride' | 'result' | 'forge-arrival' | 'forge-power' | 'forge-alu' | 'forge-rise' | 'forge-result' | 'thread-arrival' | 'thread-device' | 'thread-audit' | 'thread-ride' | 'thread-result' | 'snow-arrival' | 'snow-device' | 'snow-audit' | 'snow-final' | 'snow-result';
 export class CityView {
   renderer: T.WebGLRenderer;
   camera = new T.PerspectiveCamera(62,1,.15,1300);
@@ -15,7 +16,8 @@ export class CityView {
   dockWeather = new WeatherRig(this.world.scene,false,this.world.sky,this.world.rain);
   forge: PulseWorld | null = null;
   thread: ThreadWorld | null = null;
-  city: 'dock' | 'forge' | 'thread' = 'dock';
+  snow: SnowWorld | null = null;
+  city: 'dock' | 'forge' | 'thread' | 'snow' = 'dock';
   weather: Weather = 'rain';
   mode: ViewMode = 'menu';
   yaw = 0;
@@ -54,14 +56,15 @@ export class CityView {
     this.settings=settings;
     this.renderer.setPixelRatio(Math.min(devicePixelRatio,settings.quality==='low'?1:1.65));
     this.world.setQuality(settings.quality==='low');
-    this.dockWeather.setQuality(settings.quality==='low');this.forge?.setQuality(settings.quality==='low');this.thread?.setQuality(settings.quality==='low');
+    this.dockWeather.setQuality(settings.quality==='low');this.forge?.setQuality(settings.quality==='low');this.thread?.setQuality(settings.quality==='low');this.snow?.setQuality(settings.quality==='low');
   }
-  switchCity(city:'dock'|'forge'|'thread'):void {
+  switchCity(city:'dock'|'forge'|'thread'|'snow'):void {
     this.city=city;
     if(city==='forge'&&!this.forge){this.forge=new PulseWorld();this.forge.setQuality(this.settings.quality==='low');}
     if(city==='thread'&&!this.thread){this.thread=new ThreadWorld();this.thread.setQuality(this.settings.quality==='low');}
+    if(city==='snow'&&!this.snow){this.snow=new SnowWorld();this.snow.setQuality(this.settings.quality==='low');}
     this.warmup=true;
-    this.renderer.domElement.setAttribute('aria-label',`${city==='thread'?'千线程':city==='forge'?'脉冲炉':'指针港'}三维场景；WASD 移动，右键看四周，Q 扫描，E 互动`);
+    this.renderer.domElement.setAttribute('aria-label',`${city==='snow'?'雨线城白噪雪原':city==='thread'?'千线程':city==='forge'?'脉冲炉':'指针港'}三维场景；WASD 移动，右键看四周，Q 扫描，E 互动${city==='snow'?'，F 稳身抗风':''}`);
   }
   resize(): void {
     this.width=window.innerWidth;this.height=window.innerHeight;
@@ -89,7 +92,7 @@ export class CityView {
   }
   render(dt: number,hero: V3,speed: number,paused: boolean): void {
     this.elapsed+=dt;
-    const active=this.city==='thread'&&this.thread?this.thread:this.city==='forge'&&this.forge?this.forge:this.world;
+    const active=this.city==='snow'&&this.snow?this.snow:this.city==='thread'&&this.thread?this.thread:this.city==='forge'&&this.forge?this.forge:this.world;
     if(this.city==='thread'&&this.thread)this.thread.weather.weather=this.weather;
     if(this.city==='forge'&&this.forge)this.forge.weather.weather=this.weather;
     active.update(paused?0:dt,hero,paused?0:speed,paused||this.mode==='order'||this.mode==='rail',this.settings.reducedMotion);
@@ -98,6 +101,14 @@ export class CityView {
     if(this.mode==='menu') {
       const drift=this.settings.reducedMotion?0:Math.sin(this.elapsed*.07)*1.8;
       this.desired.set(6+drift,27,55);this.target.set(14,26,-70);
+    } else if(this.mode==='snow-arrival') {
+      this.desired.set(-141,52,133);this.target.set(-40,8,3);
+    } else if(this.mode==='snow-device'&&this.snow) {
+      const p=this.snow.focus;this.desired.set(p.x-23,p.y+19,p.z+26);this.target.set(p.x-2,p.y+3.5,p.z-4);
+    } else if(this.mode==='snow-audit') {
+      this.desired.set(31,42,-130);this.target.set(-14,6,-219);
+    } else if(this.mode==='snow-final'||this.mode==='snow-result') {
+      this.desired.set(-61,42,-262);this.target.set(-109,14,-319);
     } else if(this.mode==='thread-arrival') {
       this.desired.set(-24,72,78);this.target.set(0,39,-104);
     } else if(this.mode==='thread-device'&&this.thread) {
@@ -133,7 +144,7 @@ export class CityView {
     } else if(this.mode==='result') {
       this.desired.set(62,37,-57);this.target.set(23,20,-89);
     } else {
-      const distance=this.width<700?10.5:8.8;
+      const distance=this.city==='snow'?(this.width<700?13:11.5):this.width<700?10.5:8.8;
       this.target.set(hero.x,hero.y+1.55,hero.z);
       const yaw=this.mode==='ride'?-.75:this.yaw;
       this.desired.set(hero.x+Math.sin(yaw)*distance,hero.y+2.2+Math.sin(this.pitch)*distance,hero.z+Math.cos(yaw)*distance);
@@ -146,7 +157,7 @@ export class CityView {
     }
     const response=this.warmup?1:1-Math.exp(-dt*(this.settings.reducedMotion?14:5));
     this.camera.position.lerp(this.desired,response);this.look.lerp(this.target,response);this.camera.lookAt(this.look);
-    const fov=this.mode==='rail'?53:this.mode==='order'?54:62;
+    const fov=this.city==='snow'?67:this.mode==='rail'?53:this.mode==='order'?54:62;
     if(Math.abs(this.camera.fov-fov)>.01){this.camera.fov=T.MathUtils.damp(this.camera.fov,fov,5,dt);this.camera.updateProjectionMatrix();}
     this.renderer.render(active.scene,this.camera);this.warmup=false;
     this.frames++;this.sampleTime+=dt;

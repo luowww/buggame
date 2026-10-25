@@ -4,13 +4,25 @@ import crypto from 'node:crypto';
 
 const root=process.cwd();
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');
+const manifest=JSON.parse(read('package.json'));
+const profiles={
+  '6.2.0':{receipt:'artifacts/v6.2-ui-checks.json',review:'docs/v6/THREAD_REVIEW.md',minimum:20},
+  '6.3.0':{receipt:'artifacts/v6.3-ui-checks.json',review:'docs/v6/SNOW_REVIEW.md',minimum:35},
+};
+const profile=profiles[manifest.version];
+if(!profile)throw new Error(`No reviewed release profile for ${manifest.version}`);
 function walk(dir){return fs.readdirSync(path.join(root,dir),{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(`${dir}/${e.name}`):[`${dir}/${e.name}`]);}
 function sourceFingerprint(){
-  const files=[...walk('src/game'),...walk('tests'),'index.html','package.json','package-lock.json','vite.config.ts','tsconfig.json',
-    'scripts/check-release.mjs','README.md','docs/v6/THREAD_REVIEW.md'];
+  const files=[...walk('src/game'),...walk('tests'),...walk('public'),...walk('docs/v6'),...walk('docs/guide'),
+    'index.html','package.json','package-lock.json','vite.config.ts','tsconfig.json','scripts/check-release.mjs','README.md','docs/ASSET_LICENSES.md'];
   if(fs.existsSync(path.join(root,'.github/workflows/verify.yml')))files.push('.github/workflows/verify.yml');
   const digest=crypto.createHash('sha256');
-  for(const file of files.sort())digest.update(file+'\0'+read(file).replace(/\r\n/g,'\n')+'\0');
+  for(const file of [...new Set(files)].sort()){
+    digest.update(file+'\0');
+    if(/\.(?:ts|js|mjs|css|html|json|md|txt|yml|yaml|svg)$|\/(?:_headers|_redirects)$/.test(file))digest.update(read(file).replace(/\r\n/g,'\n'));
+    else digest.update(fs.readFileSync(path.join(root,file)));
+    digest.update('\0');
+  }
   return digest.digest('hex');
 }
 function requireThat(ok,message){if(!ok)throw new Error(message);}
@@ -35,20 +47,22 @@ function staticBuild(){
 const mode=process.argv[2];
 if(mode==='--seal'){
   // Only seal after the recorded UI checks and written review have been completed.
-  const file='artifacts/v6.2-ui-checks.json',receipt=JSON.parse(read(file));
-  requireThat(receipt.checks?.length>=20&&receipt.checks.every(c=>c.passed===true),'UI evidence contains failures or is incomplete');
-  requireThat(read('docs/v6/THREAD_REVIEW.md').includes('状态：通过'),'Written review has not passed');
-  receipt.sourceFingerprint=sourceFingerprint();receipt.review='docs/v6/THREAD_REVIEW.md';receipt.buildAssets=staticBuild();
+  const file=profile.receipt,receipt=JSON.parse(read(file));
+  requireThat(receipt.version===manifest.version,'UI receipt version mismatch');
+  requireThat(receipt.checks?.length>=profile.minimum&&receipt.checks.every(c=>c.passed===true),'UI evidence contains failures or is incomplete');
+  requireThat(Array.isArray(receipt.finalConsoleErrors)&&receipt.finalConsoleErrors.length===0,'Final browser error inspection is incomplete');
+  requireThat(read(profile.review).includes('状态：通过'),'Written review has not passed');
+  receipt.sourceFingerprint=sourceFingerprint();receipt.review=profile.review;receipt.buildAssets=staticBuild();
   fs.writeFileSync(path.join(root,file),JSON.stringify(receipt,null,2)+'\n');
   process.stdout.write('UI evidence sealed against the reviewed source.\n');
 }else{
   const links=docs(),assets=staticBuild();
   if(mode==='--strict'){
-    const receipt=JSON.parse(read('artifacts/v6.2-ui-checks.json'));
-    requireThat(receipt.version===JSON.parse(read('package.json')).version,'QA receipt version mismatch');
-    requireThat(receipt.checks?.length>=20&&receipt.checks.every(c=>c.passed===true),'UI checks have not all passed');
+    const receipt=JSON.parse(read(profile.receipt));
+    requireThat(receipt.version===manifest.version,'QA receipt version mismatch');
+    requireThat(receipt.checks?.length>=profile.minimum&&receipt.checks.every(c=>c.passed===true),'UI checks have not all passed');
     requireThat(Array.isArray(receipt.finalConsoleErrors)&&receipt.finalConsoleErrors.length===0,'Final browser errors have not been cleared');
-    requireThat(read('docs/v6/THREAD_REVIEW.md').includes('状态：通过'),'Written review has not passed');
+    requireThat(read(profile.review).includes('状态：通过'),'Written review has not passed');
     requireThat(receipt.sourceFingerprint===sourceFingerprint(),'Source changed after UI QA/review; rerun affected checks and reseal the evidence');
   }
   process.stdout.write(JSON.stringify({staticBuild:'passed',localLinks:links,assets,review:mode==='--strict'?'passed':'not requested'})+'\n');

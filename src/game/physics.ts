@@ -4,6 +4,8 @@ export interface Surface { id: string; x: number; z: number; w: number; d: numbe
 export interface Obstacle { x: number; z: number; w: number; d: number; bottom: number; top: number }
 export interface Intent { x: number; z: number; jump: boolean; sprint: boolean }
 export interface WorldBounds { minZ:number; maxZ:number; maxX:number; fallY:number }
+export interface MotorEnvironment { windX:number; windZ:number; grip:number; pace:number }
+export const STILL_AIR:MotorEnvironment={windX:0,windZ:0,grip:1,pace:1};
 export const DOCK_BOUNDS:WorldBounds={minZ:-114,maxZ:114,maxX:145,fallY:-7};
 export const START: V3 = { x: 0, y: 3, z: 31 };
 export const A_CHECKPOINT={x:0,y:13,z:-44};
@@ -32,6 +34,7 @@ export class Motor {
   private jumpHeld = false;
   private respawnTimer = 0;
   falls = 0;
+  environment:MotorEnvironment={...STILL_AIR};
   constructor(public surfaces: Surface[], public obstacles: Obstacle[] = [], public bounds:WorldBounds={...DOCK_BOUNDS}) {}
   warp(position: V3): void {
     this.position = { ...position }; this.velocity = { x: 0, y: 0, z: 0 };
@@ -52,10 +55,10 @@ export class Motor {
       this.velocity.y = 7.1; this.grounded = false; this.jumpBuffer = 0; this.coyote = 0;
     }
     const magnitude = Math.hypot(input.x, input.z);
-    const speed = input.sprint ? 9.2 : 5.4;
-    const factor = Math.min(1, 18 * dt) * (this.grounded ? 1 : 0.45);
-    this.velocity.x += ((magnitude > 0 ? input.x / Math.max(1, magnitude) * speed : 0) - this.velocity.x) * factor;
-    this.velocity.z += ((magnitude > 0 ? input.z / Math.max(1, magnitude) * speed : 0) - this.velocity.z) * factor;
+    const env = this.environment, speed = (input.sprint ? 9.2 : 5.4) * env.pace;
+    const factor = Math.min(1, 18 * dt) * (this.grounded ? 1 : 0.45) * env.grip;
+    this.velocity.x += ((magnitude > 0 ? input.x / Math.max(1, magnitude) * speed : 0) + env.windX - this.velocity.x) * factor;
+    this.velocity.z += ((magnitude > 0 ? input.z / Math.max(1, magnitude) * speed : 0) + env.windZ - this.velocity.z) * factor;
     const nx = this.position.x + this.velocity.x * dt;
     const nz = this.position.z + this.velocity.z * dt;
     if (!this.blocked(nx, this.position.z)) this.position.x = nx;

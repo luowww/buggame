@@ -15,7 +15,7 @@ const mainForPhase={locks:'OS-01',schedule:'OS-02',counter:'OS-03',memory:'OS-04
 const allCases:ThreadCase[]=[...THREAD_MAIN,...THREAD_SIDE];
 interface Hooks {
   campaign:()=>Campaign;view:CityView;motor:Motor;audio:CityAudio;block:(on:boolean)=>void;
-  clearInput:()=>void;persist:()=>void;toast:(text:string,n?:number)=>void;returnForge:()=>void;openMap:()=>void;
+  clearInput:()=>void;persist:()=>void;toast:(text:string,n?:number)=>void;returnForge:()=>void;enterSnow:()=>void;openMap:()=>void;
 }
 type Cinema={kind:'arrival'|'repair'|'audit'|'ride'|'shuttle';age:number;id?:ThreadCase;run?:ThreadRun;target?:V3};
 export class ThreadChapter {
@@ -39,7 +39,7 @@ export class ThreadChapter {
     <section id="thread-journal" hidden role="dialog" aria-modal="true" aria-labelledby="thread-journal-title"><header><div><span class="eyebrow">FOUR SYSTEMS / SIX STORIES</span><h2 id="thread-journal-title">千线程 · 任务册</h2></div><button id="thread-journal-close" class="close-button" aria-label="关闭任务册">×</button></header><p>主线打开前往下一层的路。两条蓝色支线可以稍后回来；扫描过的站台支持接驳。</p><div id="thread-journal-grid"></div><footer><button id="thread-main-track" class="text-button">回到当前主线 →</button><button id="thread-city-map" class="text-button">城际地图 ↗</button></footer></section>
     <div id="thread-dialog" hidden><span class="eyebrow">IRIS / 千线程调度员</span><p id="thread-dialog-text"></p><button id="thread-dialog-next" class="text-button">继续 <kbd>E</kbd> →</button></div>
     <div id="thread-cinema" hidden><span id="thread-run-id" class="thread-cinema-top mono"></span><div class="thread-cinema-copy"><span id="thread-cinema-kicker" class="eyebrow"></span><h2 id="thread-cinema-title"></h2><p id="thread-cinema-detail"></p><button id="thread-skip" class="text-button">跳过镜头 →</button></div></div>
-    <section id="thread-result" hidden><span class="eyebrow">CHAPTER 03 / THREADFALL</span><div class="thread-result-code">200 <small>OK</small></div><h2>每一道等待，<br>都等来了回应。</h2><p id="thread-ending"></p><div id="thread-result-stats"></div><button id="thread-roam" class="primary">继续探索千线程 ↗</button><div class="thread-result-links"><button id="thread-result-journal" class="text-button">打开任务册 · 寻找支线 →</button><button id="thread-ride-again" class="text-button">再乘一次双线列车 ↗</button><button id="thread-return" class="text-button">乘城际列车返回脉冲炉 →</button><button id="thread-replay" class="text-button">重新修复第三城 ↶</button></div><p class="thread-next mono">03 / 08 城市已开放<br>下一程 · 雨线城 / 规划中</p></section>
+    <section id="thread-result" hidden><span class="eyebrow">CHAPTER 03 / THREADFALL</span><div class="thread-result-code">200 <small>OK</small></div><h2>每一道等待，<br>都等来了回应。</h2><p id="thread-ending"></p><div id="thread-result-stats"></div><button id="thread-next-city" class="primary">下一站 · 白噪雪原 →</button><button id="thread-roam" class="text-button">继续探索千线程 ↗</button><div class="thread-result-links"><button id="thread-result-journal" class="text-button">打开任务册 · 寻找支线 →</button><button id="thread-ride-again" class="text-button">再乘一次双线列车 ↗</button><button id="thread-return" class="text-button">乘城际列车返回脉冲炉 →</button><button id="thread-replay" class="text-button">重新修复第三城 ↶</button></div><p class="thread-next mono">04 / 08 城市已开放<br>下一站 · 白噪雪原 / 已开放</p></section>
     <nav id="thread-field-tools" hidden aria-label="千线程旅行"><button id="thread-journal-toggle">任务册 <kbd>M</kbd> <b id="thread-task-count">0 / 6</b></button><button id="thread-field-return">← 脉冲炉</button></nav>`;
     $('app').append(root);
     $('thread-close').onclick=()=>this.closePanel();$('thread-preview').onclick=()=>this.preview();$('thread-verify').onclick=()=>this.verify();
@@ -51,7 +51,8 @@ export class ThreadChapter {
     $('thread-roam').onclick=()=>this.roam();$('thread-result-journal').onclick=()=>{this.roam();this.openJournal();};
     $('thread-ride-again').onclick=()=>{if(!this.state.audited||this.state.phase!=='complete')return;this.result=false;show('thread-result',false);this.h.motor.warp(THREAD_AUDIT);this.startCinema({kind:'ride',age:0});};
     $('thread-return').onclick=$('thread-field-return').onclick=()=>this.h.returnForge();
-    $('thread-replay').onclick=()=>{this.h.campaign().data.thread=freshThread();this.enter();};
+    $('thread-next-city').onclick=()=>this.h.enterSnow();
+    $('thread-replay').onclick=()=>{const data=this.h.campaign().data;if(data.thread.phase==='complete')data.threadClearance=structuredClone(data.thread);data.thread=freshThread();this.enter();};
   }
   enter():void {
     this.hide();this.h.view.switchCity('thread');this.h.campaign().data.city='thread';
@@ -205,7 +206,7 @@ export class ThreadChapter {
     const cinema=this.cinema;if(!cinema)return;this.cinema=null;show('thread-cinema',false);
     if(cinema.kind==='ride'){
       if(!this.authority.finish()){this.h.toast('疏散验证尚未通过。');this.h.block(false);this.h.view.mode='follow';return;}
-      this.h.view.thread!.rideT=null;this.sync();this.h.motor.warp(THREAD_END);this.h.persist();this.showResult();return;
+      this.h.campaign().data.threadClearance=structuredClone(this.state);this.h.view.thread!.rideT=null;this.sync();this.h.motor.warp(THREAD_END);this.h.persist();this.showResult();return;
     }
     if(cinema.kind==='shuttle'&&cinema.target){this.h.motor.warp(cinema.target);this.h.motor.setCheckpoint(cinema.target);}
     this.h.block(false);this.h.view.mode='follow';this.h.clearInput();this.updateHud();
@@ -214,7 +215,7 @@ export class ThreadChapter {
     this.result=true;this.h.block(true);show('thread-result',true);show('thread-field-tools',false);show('interact-prompt',false);this.h.view.mode='thread-result';
     const optional=this.state.completed.filter(id=>THREAD_SIDE.includes(id as typeof THREAD_SIDE[number])).length;
     txt('thread-ending',optional===2?'六段故事都已接回世界。IRIS 与哥哥的列车，终于在同一个站台停下。':`四条主线已经恢复。沿途还有 ${2-optional} 段故事，任务册会为你保留它们的位置。`);
-    $('thread-result-stats').innerHTML=`<span><b>4 / 4</b>主线修复</span><span><b>${optional} / 2</b>支线故事</span><span><b>03 / 08</b>开放城市</span>`;
+    $('thread-result-stats').innerHTML=`<span><b>4 / 4</b>主线修复</span><span><b>${optional} / 2</b>支线故事</span><span><b>04 / 08</b>开放城市</span>`;
     this.h.audio.cue('success');this.h.persist();$('thread-result').scrollTop=0;$('thread-roam').focus({preventScroll:true});
   }
   private roam():void {this.result=false;show('thread-result',false);this.h.block(false);this.h.view.mode='follow';this.h.clearInput();this.updateHud();}

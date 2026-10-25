@@ -4,6 +4,8 @@
 
 截图日期：2026-10-24。首城原截图基线为 V6 `332406d`；`10-finish.jpg` 和首页封面已更新到 V6.1 两城版，显示新的城际入口。所有图片使用本地生产构建。工作台的滚动位置因讲解按钮不同。
 
+当前游戏为 V6.3 四城版。前三城图片保留各自验收时的历史版本；旧截图中 2/8、3/8 的计数不表示当前开放数量。第四城的图文与最终四城地图在 `snow/`，详见下表。
+
 | 文件 | 说明 |
 | --- | --- |
 | [01-mira-interact.jpg](01-mira-interact.jpg) | 靠近 MIRA，出现对话提示 |
@@ -43,3 +45,37 @@ V6.2 第三城截图日期为 2026-10-25，保存在 `thread/`。全部来自本
 | [17-mobile-counter.jpg](thread/17-mobile-counter.jpg) | 手机原子提交与执行回放 |
 | [18-mobile-memory.jpg](thread/18-mobile-memory.jpg) | 手机内存策略、回放与固定验证按钮 |
 | [19-city-map.jpg](thread/19-city-map.jpg) | 三城往返与其余五城规划标识 |
+
+V6.3 第四城截图日期为 2026-10-25，保存在 `snow/`。全部来自生产构建的正常操作：亲自走到新设施扫描、使用原生工作台、已扫描站点的正式雪地车接驳、WASD/F 穿越三站。没有注入存档或调用开发传送钩子。带性能小窗的早期验收图显示实际渲染读数；最终封面和手机图已移除该调试显示。手机图是 390×844 浏览器视口验收。
+
+| 文件 | 说明 |
+| --- | --- |
+| [01-snowfield.jpg](snow/01-snowfield.jpg) | 第四城水平雪原、锈红天线与雪地车 |
+| [02-blizzard.jpg](snow/02-blizzard.jpg) | 暴风雪环境 |
+| [03-survey.jpg](snow/03-survey.jpg) | 初入雪原的阶段门与未开放站点 |
+| [04-wind-error.jpg](snow/04-wind-error.jpg) | 天线持续加热造成断供的反例 |
+| [05-wind-proof.jpg](snow/05-wind-proof.jpg) | 风向、风闸、恒温除冰的三天气报告 |
+| [06-route-boundary.jpg](snow/06-route-boundary.jpg) | TTL 太短时暴风绕行失败 |
+| [07-route-proof.jpg](snow/07-route-proof.jpg) | A 首选 C 的有效替代路由 |
+| [08-discovery.jpg](snow/08-discovery.jpg) | 地址、缓存有效期与健康站点 |
+| [09-reliable-error.jpg](snow/09-reliable-error.jpg) | 指出具体重复/缺失逻辑信的报告 |
+| [10-reliable-proof.jpg](snow/10-reliable-proof.jpg) | 重传、会话序号去重与重复 ACK |
+| [11-checksum-proof.jpg](snow/11-checksum-proof.jpg) | CRC-8 与损坏重传 |
+| [12-congestion-error.jpg](snow/12-congestion-error.jpg) | 固定大窗口的丢弃与耗时反例 |
+| [13-congestion-proof.jpg](snow/13-congestion-proof.jpg) | 上限 12、自适应与退避通过三负载 |
+| [14-clock-error.jpg](snow/14-clock-error.jpg) | 逻辑时间缺少统一平局规则仍不一致 |
+| [15-clock-proof.jpg](snow/15-clock-proof.jpg) | 四塔在已知批次内取得共同因果顺序 |
+| [16-storm-protocol.jpg](snow/16-storm-protocol.jpg) | 五系统回归开启风暴投递 |
+| [17-whiteout-crossing.jpg](snow/17-whiteout-crossing.jpg) | 第一段冰桥的正常稳身步行 |
+| [18-handoff-checkpoint.jpg](snow/18-handoff-checkpoint.jpg) | 第一站交接后重载，恢复同一检查点 |
+| [19-west-crossing.jpg](snow/19-west-crossing.jpg) | 第二段向西横穿峡谷 |
+| [20-observatory-approach.jpg](snow/20-observatory-approach.jpg) | 第三段向北抵达极光观测站 |
+| [21-main-ending.jpg](snow/21-main-ending.jpg) | 五主线与三交接完成、支线尚有一条未完成 |
+| [22-heartbeat-proof.jpg](snow/22-heartbeat-proof.jpg) | 通关后完成心跳/恢复/代次栅栏支线 |
+| [23-complete-sun.jpg](snow/23-complete-sun.jpg) | 最终 5/5、3/3、3/3 晴霁结局 |
+| [24-complete-blizzard.jpg](snow/24-complete-blizzard.jpg) | 同一结局镜头切换暴风雪 |
+| [25-survey-complete.jpg](snow/25-survey-complete.jpg) | 八关全收集勘测册 |
+| [26-mobile-survey.jpg](snow/26-mobile-survey.jpg) | 手机完整路线与单列勘测卡片 |
+| [27-mobile-workbench.jpg](snow/27-mobile-workbench.jpg) | 手机滚动报告与固定验证入口 |
+| [28-mobile-ending.jpg](snow/28-mobile-ending.jpg) | 手机结算的所有操作均可滚动到达 |
+| [29-four-cities.jpg](snow/29-four-cities.jpg) | 重玩第三城时第四城资格仍保留；其余四城规划 |
