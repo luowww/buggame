@@ -79,3 +79,7 @@ V6.3 第四城截图日期为 2026-10-25，保存在 `snow/`。全部来自生�
 | [27-mobile-workbench.jpg](snow/27-mobile-workbench.jpg) | 手机滚动报告与固定验证入口 |
 | [28-mobile-ending.jpg](snow/28-mobile-ending.jpg) | 手机结算的所有操作均可滚动到达 |
 | [29-four-cities.jpg](snow/29-four-cities.jpg) | 重玩第三城时第四城资格仍保留；其余四城规划 |
+| [30-transparent-hud-desktop.jpg](snow/30-transparent-hud-desktop.jpg) | 后续微调：桌面左上角任务提示去掉底板、边框与面板阴影 |
+| [31-transparent-hud-mobile.jpg](snow/31-transparent-hud-mobile.jpg) | 同一透明提示在390×844手机视口的效果 |
+
+第四城任务提示已按反馈改成透明悬浮文字。前29张图保留开发验收时的画面，30–31为这次样式微调后的截图。

@@ -5,9 +5,10 @@ body[data-city=snow] .film-vignette{background:radial-gradient(ellipse at 50% 45
 #app[data-city=snow] .brand,#app[data-city=snow] .brand small,#app[data-city=snow] .top-actions,#app[data-city=snow] .header-center{color:#3e4a3b}
 #app[data-city=snow] .brand b,#app[data-city=snow] .brand svg{color:#ac4e2e}
 #app[data-city=snow] .icon-button,#app[data-city=snow] .help-icon{color:#39483d;border-color:#6f76525c}
-#app[data-city=snow] .objective{background:#f3efe3eb;border-left:3px solid #ab4d30;padding:17px 18px;left:35px;top:127px;max-width:300px;width:300px;box-shadow:0 8px 35px #4653480d}
+#app[data-city=snow] .objective{background:transparent;border:0;padding:17px 18px;left:35px;top:127px;max-width:300px;width:300px;box-shadow:none}
 #app[data-city=snow] .objective h2{color:#2d3d32;font-family:'Songti SC','SimSun',serif;font-size:25px;line-height:1.5;margin-top:10px}
 #app[data-city=snow] .objective,#app[data-city=snow] .identity,#app[data-city=snow] .sector-label,#app[data-city=snow] .world-marker{text-shadow:none}
+#app[data-city=snow] .objective{text-shadow:0 1px 2px #f9f5e8e6,0 0 7px #f9f5e8a6}
 #app[data-city=snow] .objective p{color:#57634f;font-size:11px;line-height:1.9}
 #app[data-city=snow] .quest-distance,#app[data-city=snow] .objective-hint{color:#8a593c;border-color:#83876d33}
 #app[data-city=snow] .compass{color:#626e58;background:#eeeade99;padding:8px 18px;top:99px;border-radius:20px}

@@ -338,6 +338,26 @@
       "check": "Four-city round trip and independent weather UI",
       "passed": true,
       "evidence": "Normal city map travelled snow→dock→forge→thread→snow. Dock retains complete state; replaying forge and thread retain valid onward certificates. Old cities restore sun/rain, snow restores its three weather controls and all8/3posts complete. Old-city puzzles are covered by automated regressions and previous-version manual reports, not re-solved in this run."
+    },
+    {
+      "check": "Transparent fourth-city objective on desktop",
+      "passed": true,
+      "evidence": "{\"background\":\"rgba(0, 0, 0, 0)\",\"border\":\"0px\",\"boxShadow\":\"none\",\"opacity\":\"1\",\"overflow\":false,\"text\":\"CHAPTER 04 / RESTORED\\n你的声音已抵达\\n\\n主线 5/5，支线 3/3。M 可以继续寻找未完成的故事。\\n\\n↗ 303 m / 沿橙旗前往\\n需要一点线索？ ↗\",\"textShadow\":\"rgba(249, 245, 232, 0.9) 0px 1px 2px, rgba(249, 245, 232, 0.65) 0px 0px 7px\"}"
+    },
+    {
+      "check": "Transparent objective persists across snow and whiteout",
+      "passed": true,
+      "evidence": "Normal weather buttons: no opaque objective background in snow or whiteout; text remains opaque with a pale shadow. Visual check of scene through text area."
+    },
+    {
+      "check": "Transparent objective in 390x844 mobile viewport",
+      "passed": true,
+      "evidence": "Native390×844 viewport; transparent background,0px border,no panel shadow; objective text readable over snow/rock and page has no horizontal overflow; touch controls remain available."
+    },
+    {
+      "check": "Objective visibility restores after workbench",
+      "passed": true,
+      "evidence": "Normal E interaction opens NET-02; objective remains hidden while editing; close restores transparent objective. This patch changes only snow-specific CSS."
     }
   ],
   "finalConsoleErrors": [],
@@ -349,10 +369,10 @@
     "input": "native keyboard, pointer and DOM locators; no injected progress or runtime state",
     "phoneHardwareTested": false
   },
-  "sourceFingerprint": "71fabf1205953386f015e690624d6891567ea8b5c0882c9ae53ff2414d1cf869",
   "review": "docs/v6/SNOW_REVIEW.md",
+  "sourceFingerprint": "042d0dd29c0ab530fd1ab5f82a2b0f083861f81075f67590f1dbde8dde1a02d3",
   "buildAssets": [
-    "assets/index-DJaaNEuI.js",
-    "assets/index-YMtDktLQ.css"
+    "assets/index-kFxgPpZw.js",
+    "assets/index-CokDPdhz.css"
   ]
 }
