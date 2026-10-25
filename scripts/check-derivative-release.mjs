@@ -31,7 +31,12 @@ const exists = (file) => fs.existsSync(path.join(root, file));
 const requireThat = (ok, message) => { if (!ok) throw new Error(message); };
 
 const manifest = JSON.parse(read('package.json'));
+// The reviewed upstream source is identified by its *tree*, not by a commit
+// sha: the same content can appear under different commit shas (re-created
+// commits, API-created commits), and the evidence is about the files, not the
+// commit metadata. The anchor records both, and the tree wins.
 const UPSTREAM_COMMIT = process.env.UPSTREAM_COMMIT || '6d04064';
+const UPSTREAM_ANCHOR = 'artifacts/upstream-anchor.json';
 const UPSTREAM_RECEIPT = 'artifacts/v6.4-ui-checks.json';
 const DERIVATIVE_RECEIPTS = [
   'artifacts/e2e-production-checks.json',
@@ -74,6 +79,38 @@ function fingerprintOfCommit(commit) {
 }
 
 // ---------------------------------------------------------------------------
+// Resolve which local commit carries the reviewed upstream tree. Prefer the
+// anchor's tree (content identity); fall back to the recorded commit sha.
+// ---------------------------------------------------------------------------
+function resolveUpstream() {
+  const anchor = exists(UPSTREAM_ANCHOR) ? JSON.parse(read(UPSTREAM_ANCHOR)) : null;
+  const wantedTree = anchor?.tree;
+  if (wantedTree) {
+    const chain = execFileSync('git', ['log', '--first-parent', '--format=%H %T', '-60', 'HEAD'],
+      { maxBuffer: 1 << 28 }).toString('utf8').split('\n').filter(Boolean);
+    for (const line of chain) {
+      const [commit, tree] = line.split(' ');
+      if (tree === wantedTree) return { commit, tree, via: 'tree' };
+    }
+  }
+  // No matching tree in history: fall back to the sha if this clone has it.
+  try {
+    execFileSync('git', ['cat-file', '-e', `${UPSTREAM_COMMIT}^{commit}`], { stdio: 'ignore' });
+    return { commit: UPSTREAM_COMMIT, tree: null, via: 'sha' };
+  } catch {
+    throw new Error(
+      `Cannot locate the reviewed upstream tree (${wantedTree ?? 'no anchor'}) in this history`,
+    );
+  }
+}
+
+let upstreamCache = null;
+function upstreamRef() {
+  if (!upstreamCache) upstreamCache = resolveUpstream();
+  return upstreamCache;
+}
+
+// ---------------------------------------------------------------------------
 // 1. Provenance: the inherited upstream evidence must be untouched.
 // ---------------------------------------------------------------------------
 function provenance() {
@@ -89,11 +126,13 @@ function provenance() {
     'Upstream receipt records browser console errors');
 
   // Recompute upstream's fingerprint from the upstream commit's own tree.
-  const computed = fingerprintOfCommit(UPSTREAM_COMMIT);
+  const upstream = upstreamRef();
+  const computed = fingerprintOfCommit(upstream.commit);
   requireThat(receipt.sourceFingerprint === computed,
     'Inherited upstream evidence does not match the upstream commit — it was modified');
   return {
-    upstreamCommit: UPSTREAM_COMMIT,
+    upstreamCommit: upstream.commit,
+    upstreamResolvedBy: upstream.via,
     upstreamChecks: receipt.checks.length,
     fingerprintVerified: true,
   };
@@ -119,18 +158,19 @@ function derivative() {
 
   // The reviewed upstream tree must still be reachable, so the diff below is
   // computed against a real object rather than a remembered state.
-  const mergeBase = execFileSync('git', ['merge-base', UPSTREAM_COMMIT, 'HEAD'], { maxBuffer: 1 << 28 })
+  const upstreamCommit = upstreamRef().commit;
+  const mergeBase = execFileSync('git', ['merge-base', upstreamCommit, 'HEAD'], { maxBuffer: 1 << 28 })
     .toString('utf8').trim();
-  const upstreamFull = execFileSync('git', ['rev-parse', UPSTREAM_COMMIT], { maxBuffer: 1 << 28 })
+  const upstreamFull = execFileSync('git', ['rev-parse', upstreamCommit], { maxBuffer: 1 << 28 })
     .toString('utf8').trim();
   requireThat(mergeBase === upstreamFull,
-    `HEAD does not descend from the reviewed upstream commit ${UPSTREAM_COMMIT}`);
+    `HEAD does not descend from the reviewed upstream commit ${upstreamCommit}`);
 
   // Every path we changed relative to upstream must be a declared one.
   // Compare the committed tree AND the working tree: an uncommitted edit to a
   // rule file would otherwise slip past a HEAD-only diff.
   const changedCommitted = execFileSync(
-    'git', ['diff', '--name-only', UPSTREAM_COMMIT, 'HEAD'], { maxBuffer: 1 << 28 },
+    'git', ['diff', '--name-only', upstreamCommit, 'HEAD'], { maxBuffer: 1 << 28 },
   ).toString('utf8').split('\n').filter(Boolean);
   const changedWorking = execFileSync(
     'git', ['status', '--porcelain', '--untracked-files=all'], { maxBuffer: 1 << 28 },
@@ -149,6 +189,8 @@ function derivative() {
     'package.json',
     'scripts/check-deploy-safety.mjs',
     'scripts/check-derivative-release.mjs',
+    'artifacts/upstream-anchor.json',
+    'scripts/push-via-api.mjs',
     'src/game/coach.ts',
     'src/game/main.ts',
     'src/game/snow.css',
@@ -223,6 +265,7 @@ if (mode === '--seal') {
   const record = {
     sealedAt: new Date().toISOString().slice(0, 10),
     upstreamCommit: provenanceResult.upstreamCommit,
+    upstreamResolvedBy: provenanceResult.upstreamResolvedBy,
     upstreamFingerprintVerified: true,
     upstreamChecks: provenanceResult.upstreamChecks,
     derivativeChecks: derivativeResult.receipts.map((r) => ({ file: r.file, checks: r.checks })),
@@ -239,6 +282,7 @@ if (mode === '--seal') {
   process.stdout.write(JSON.stringify({
     upstreamProvenance: 'verified',
     upstreamCommit: provenanceResult.upstreamCommit,
+    upstreamResolvedBy: provenanceResult.upstreamResolvedBy,
     upstreamChecks: provenanceResult.upstreamChecks,
     derivativeChecks: derivativeResult.receipts.reduce((n, r) => n + r.checks, 0),
     changedFiles: derivativeResult.changedFiles,
