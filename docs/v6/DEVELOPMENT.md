@@ -149,18 +149,18 @@ npm run preview -- --host 127.0.0.1 --port 5387
 指纹逐位比对：
 
 ```sh
-git ls-tree -r --name-only a8b36b0   # 文件清单取自上游 commit，不取工作区
-git show a8b36b0:<path>              # 内容也取自上游 commit
+git ls-tree -r --name-only 6d04064   # 文件清单取自上游 commit，不取工作区
+git show 6d04064:<path>              # 内容也取自上游 commit
 ```
 
-两者一致才说明继承来的 66 项界面验收记录确实是上游对那份源码做的，没有被
+两者一致才说明继承来的 85 项界面验收记录确实是上游对那份源码做的，没有被
 修改过。任何对上游收据的改动都会让这一步失败。
 
 ### 2. 衍生改动自身的证据（derivative）
 
-- 继承的上游收据仍记录 66 项全部通过、最终浏览器错误列表为空、审查报告状态为「通过」。
+- 继承的上游收据仍记录 85 项全部通过、最终浏览器错误列表为空、审查报告状态为「通过」。
 - 本仓库自己的端到端收据（`artifacts/e2e-*-checks.json`）存在且全部通过。
-- `HEAD` 确实是上游已审查 commit `a8b36b0` 的后代。
+- `HEAD` 确实是上游已审查 commit `6d04064` 的后代。
 - 相对上游的**全部改动**（含未提交的工作区改动）都在声明清单内。
 - **游戏规则文件一个都没动**：`domain.ts`、`physics.ts`、`world.ts`、`view.ts`、
   各城 chapter/domain、`style.css` 等一旦出现差异即失败。

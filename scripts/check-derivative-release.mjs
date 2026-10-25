@@ -31,8 +31,8 @@ const exists = (file) => fs.existsSync(path.join(root, file));
 const requireThat = (ok, message) => { if (!ok) throw new Error(message); };
 
 const manifest = JSON.parse(read('package.json'));
-const UPSTREAM_COMMIT = process.env.UPSTREAM_COMMIT || 'a8b36b0';
-const UPSTREAM_RECEIPT = 'artifacts/v6.3-ui-checks.json';
+const UPSTREAM_COMMIT = process.env.UPSTREAM_COMMIT || '6d04064';
+const UPSTREAM_RECEIPT = 'artifacts/v6.4-ui-checks.json';
 const DERIVATIVE_RECEIPTS = [
   'artifacts/e2e-production-checks.json',
   'artifacts/e2e-coach-checks.json',
@@ -173,9 +173,11 @@ function derivative() {
     'src/game/domain.ts', 'src/game/physics.ts', 'src/game/world.ts',
     'src/game/view.ts', 'src/game/input.ts', 'src/game/audio.ts',
     'src/game/snow-domain.ts', 'src/game/snow-chapter.ts', 'src/game/snow-content.ts',
-    'src/game/snow-layout.ts', 'src/game/snow-world.ts',
+    'src/game/snow-layout.ts', 'src/game/snow-world.ts', 'src/game/snow.css.keep',
     'src/game/thread-domain.ts', 'src/game/thread-chapter.ts',
     'src/game/forge-domain.ts', 'src/game/forge-chapter.ts',
+    'src/game/dune-domain.ts', 'src/game/dune-chapter.ts', 'src/game/dune-content.ts',
+    'src/game/dune-layout.ts', 'src/game/dune-world.ts',
     'src/game/pulse-world.ts', 'src/game/weather.ts',
     'src/game/style.css',
   ];
